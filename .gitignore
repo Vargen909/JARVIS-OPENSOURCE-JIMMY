@@ -1,0 +1,25 @@
+# Secrets & local state
+.env
+.jarvis_key
+backend/data/
+
+# Logs
+*.log
+*.log.err
+jarvis.err.log
+frontend-build.log
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+.next/
+
+# Editor
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
