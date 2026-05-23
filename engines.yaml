@@ -1,0 +1,141 @@
+# Jarvis engine registry
+# IDs are stable; keys live in .env. UI lets users pick per-mode default engine.
+
+default: ollama
+
+engines:
+  ollama:
+    label: "Ollama (Local)"
+    provider: ollama
+    requires_key: false
+    base_url_env: OLLAMA_BASE_URL
+    default_model: llama3.2
+    privacy: local
+    description: "Kör helt lokalt på din dator. Snabb, privat, gratis. Kräver Ollama installerat."
+    good_for: "Privat & offline-användning, snabba svar, ingen kostnad"
+    models:
+      - id: llama3.2
+        label: "Llama 3.2"
+        good_for: "Allt-i-allo. Bra balans mellan kvalitet och hastighet. Bra för chat, sammanfattningar, brainstorming."
+      - id: llama3.2:3b
+        label: "Llama 3.2 3B"
+        good_for: "Liten och snabb. Perfekt för svagare hårdvara. Bra för korta svar och enkla frågor."
+      - id: llama3.1
+        label: "Llama 3.1"
+        good_for: "Större kontextfönster (128k). Bra för långa dokument och kod-analys."
+      - id: qwen2.5
+        label: "Qwen 2.5"
+        good_for: "Stark på kod, matematik och flerspråkighet. Bra för utvecklare."
+      - id: qwen2.5-coder
+        label: "Qwen 2.5 Coder"
+        good_for: "Specialiserad på programmering och kodgenerering."
+      - id: mistral
+        label: "Mistral 7B"
+        good_for: "Snabb och kapabel. Bra för instruktionsföljande och RAG."
+      - id: mixtral
+        label: "Mixtral 8x7B"
+        good_for: "Mixture-of-experts. Bra på resonemang och flerspråkighet."
+      - id: phi3
+        label: "Phi-3"
+        good_for: "Liten men stark. Bra för snabba svar med begränsad hårdvara."
+      - id: gemma2
+        label: "Gemma 2"
+        good_for: "Googles öppna modell. Bra på sammanfattningar och kreativt skrivande."
+      - id: deepseek-r1
+        label: "DeepSeek R1"
+        good_for: "Resonemangsmodell. Bra för matematik, logik och stegvis problemlösning."
+
+  openai:
+    label: "OpenAI"
+    provider: openai
+    requires_key: true
+    api_key_env: OPENAI_API_KEY
+    base_url_env: OPENAI_BASE_URL
+    default_model: gpt-4o
+    privacy: cloud
+    description: "Branschledande språkmodeller från OpenAI. Bra på allt men kostar pengar."
+    good_for: "Komplexa uppgifter, hög kvalitet, multimodalt (bild & röst)"
+    models:
+      - id: gpt-4o
+        label: "GPT-4o"
+        good_for: "Flaggskepp. Bra på multimodalt (text, bild, röst), kreativitet och resonemang."
+      - id: gpt-4o-mini
+        label: "GPT-4o mini"
+        good_for: "Billig och snabb. Bra för enklare uppgifter, klassificering och vardagschat."
+      - id: gpt-4.1
+        label: "GPT-4.1"
+        good_for: "Förbättrad kod- och instruktionsföljning. Bra för utvecklare."
+      - id: o1
+        label: "o1"
+        good_for: "Resonemangsmodell. Bra för matematik, vetenskap och svår problemlösning."
+      - id: o1-mini
+        label: "o1-mini"
+        good_for: "Snabbare resonemang. Bra för kod och STEM."
+
+  claude:
+    label: "Claude (Anthropic)"
+    provider: anthropic
+    requires_key: true
+    api_key_env: ANTHROPIC_API_KEY
+    default_model: claude-sonnet-4-6
+    privacy: cloud
+    description: "Anthropics modeller. Stark på långa texter, kod och säkra svar."
+    good_for: "Skrivande av hög kvalitet, kodanalys, långa kontexter, etiska resonemang"
+    models:
+      - id: claude-sonnet-4-6
+        label: "Claude Sonnet 4.6"
+        good_for: "Bästa standardvalet. Stark på kod, UI/UX, analys och dagligt Jarvis-arbete."
+      - id: claude-opus-4-7
+        label: "Claude Opus 4.7"
+        good_for: "Toppmodell för komplexa uppgifter, djupa analyser och agentiskt arbete."
+      - id: claude-opus-4-6
+        label: "Claude Opus 4.6"
+        good_for: "Mycket stark på resonemang, stora projekt och avancerad problemlösning."
+      - id: claude-sonnet-4-5-20250929
+        label: "Claude Sonnet 4.5"
+        good_for: "Stabil och snabb premium-modell för kod, skrivande och produktarbete."
+      - id: claude-haiku-4-5-20251001
+        label: "Claude Haiku 4.5"
+        good_for: "Snabbare och billigare. Bra för korta svar, sammanfattningar och vardaglig chat."
+
+  deepseek:
+    label: "DeepSeek"
+    provider: openai_compatible
+    requires_key: true
+    api_key_env: DEEPSEEK_API_KEY
+    base_url: https://api.deepseek.com/v1
+    default_model: deepseek-chat
+    privacy: cloud
+    description: "Kinesiska modeller. Mycket prisvärda och starka på kod och resonemang."
+    good_for: "Kostnadseffektiv kod, matematik och resonemang"
+    models:
+      - id: deepseek-chat
+        label: "DeepSeek Chat"
+        good_for: "Generell chat. Bra balans mellan pris och kvalitet."
+      - id: deepseek-reasoner
+        label: "DeepSeek Reasoner"
+        good_for: "Resonemangsmodell (R1). Bra för stegvis problemlösning och matematik."
+      - id: deepseek-coder
+        label: "DeepSeek Coder"
+        good_for: "Specialiserad på programmering och kodgenerering."
+
+  kimi:
+    label: "Kimi (Moonshot AI)"
+    provider: openai_compatible
+    requires_key: true
+    api_key_env: MOONSHOT_API_KEY
+    base_url: https://api.moonshot.cn/v1
+    default_model: moonshot-v1-32k
+    privacy: cloud
+    description: "Moonshot AI:s modeller. Specialiserade på extremt långa kontexter."
+    good_for: "Långa dokument, böcker, transkript, mejlhistorik"
+    models:
+      - id: moonshot-v1-8k
+        label: "Kimi v1 8k"
+        good_for: "Snabb. Bra för korta uppgifter och chat."
+      - id: moonshot-v1-32k
+        label: "Kimi v1 32k"
+        good_for: "Medellång kontext. Bra balans pris/prestanda."
+      - id: moonshot-v1-128k
+        label: "Kimi v1 128k"
+        good_for: "Mycket lång kontext. Bra för hela dokument och böcker."

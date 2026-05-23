@@ -1,0 +1,5 @@
+INFO:     Started server process [29232]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8765 (Press CTRL+C to quit)
+2026-05-23 19:35:49,615 [INFO] jarvis.safety: {"event": "settings.reload", "engine_count": 5, "configured_count": 2}
