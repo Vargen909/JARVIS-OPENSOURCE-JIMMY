@@ -11,6 +11,8 @@ import { WebViewPanel } from "./WebViewPanel";
 import { SystemStatus } from "./panels/system-status";
 import { ActivityFeed } from "./panels/activity-feed";
 import { TasksStrip } from "./panels/tasks-strip";
+import { CoreView } from "./core-view";
+import { ViewNavigation, type ViewType } from "./view-navigation";
 import { useLayout } from "@/lib/use-layout-store";
 import { cn } from "@/lib/utils";
 import { useWebView } from "@/hooks/useWebView";
@@ -23,6 +25,7 @@ export function AppShell() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [memoryOpen, setMemoryOpen] = useState(false);
   const [customizeOpen, setCustomizeOpen] = useState(false);
+  const [activeView, setActiveView] = useState<ViewType>("command-center");
 
   const showSidebar = state.sidebar !== "hidden";
   const sidebarCompact = state.sidebar === "compact";
@@ -32,6 +35,56 @@ export function AppShell() {
     state.panels.activityFeed ||
     state.panels.tasksStrip;
 
+  const handleViewChange = (v: ViewType) => {
+    if (v === "settings") {
+      setSettingsOpen(true);
+      return;
+    }
+    if (v === "memory") {
+      setMemoryOpen(true);
+      return;
+    }
+    if (v === "customize") {
+      setCustomizeOpen(true);
+      return;
+    }
+    setActiveView(v);
+  };
+
+  // Cinematic Core View — full-screen, real backend, no sidebars
+  if (activeView === "core") {
+    return (
+      <div className="h-screen w-screen overflow-hidden bg-bg relative">
+        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-40">
+          <ViewNavigation activeView={activeView} onViewChange={handleViewChange} />
+        </div>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key="core"
+            initial={{ opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.97 }}
+            transition={{ duration: 0.3 }}
+            className="h-full pt-20"
+          >
+            <CoreView
+              conversationId={conversationId}
+              onConversationCreated={(id) => setConversationId(id)}
+              confidential={confidential}
+            />
+          </motion.div>
+        </AnimatePresence>
+        <SettingsDrawer open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+        <MemoryDrawer open={memoryOpen} onClose={() => setMemoryOpen(false)} />
+        <CustomizeLayout open={customizeOpen} onClose={() => setCustomizeOpen(false)} />
+        {webView.isOpen && (
+          <WebViewPanel url={webView.url} onClose={webView.close} />
+        )}
+      </div>
+    );
+  }
+
+  // Default Command Center layout (existing behaviour preserved)
   return (
     <div className="min-h-screen flex">
       {showSidebar && (
@@ -46,6 +99,14 @@ export function AppShell() {
         />
       )}
       <main className="flex-1 min-w-0 flex flex-col">
+        {/* Compact pill nav at top of main column for quick view switch */}
+        <div className="flex justify-center pt-3 pb-1">
+          <ViewNavigation
+            activeView={activeView}
+            onViewChange={handleViewChange}
+            compact
+          />
+        </div>
         <ChatPanel
           conversationId={conversationId}
           onConversationCreated={(id) => setConversationId(id)}

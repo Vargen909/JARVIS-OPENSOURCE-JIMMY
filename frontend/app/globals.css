@@ -91,6 +91,24 @@
   --ring: 245 158 11;
 }
 
+/* ── shadcn-style alias tokens for v0-design components ──
+   These map the v0 design's named tokens onto our existing RGB
+   palette so adapted v0 components work without rewriting them. */
+:root {
+  --primary: var(--accent);
+  --primary-foreground: var(--ink);
+  --accent-token: var(--accent);
+  --secondary: var(--bg-soft);
+  --muted: var(--bg-soft);
+  --muted-foreground: var(--ink-mute);
+  --card: var(--bg-card);
+  --card-foreground: var(--ink);
+  --foreground: var(--ink);
+  --background: var(--bg);
+  --glow: var(--accent-glow);
+  --glow-muted: var(--accent);
+}
+
 html,
 body {
   @apply bg-bg text-ink antialiased;
