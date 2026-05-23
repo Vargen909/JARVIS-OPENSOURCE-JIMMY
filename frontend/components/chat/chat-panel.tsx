@@ -125,6 +125,7 @@ export function ChatPanel({
           messages={messages}
           pending={pending}
           empty={messages.length === 0}
+          onSuggestion={(text) => void send(text)}
         />
       </div>
       {error && (

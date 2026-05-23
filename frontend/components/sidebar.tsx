@@ -10,6 +10,7 @@ import {
   Trash2,
   LayoutGrid,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useJarvis } from "./providers";
 import { api } from "@/lib/api";
 import type { ConversationOut } from "@/lib/types";
@@ -49,7 +50,7 @@ export function Sidebar({
   };
 
   useEffect(() => {
-    load();
+    void load();
   }, [activeUser?.id, currentConversationId]);
 
   const remove = async (id: number, e: React.MouseEvent) => {
@@ -57,7 +58,7 @@ export function Sidebar({
     if (!confirm("Delete this conversation?")) return;
     await api.deleteConversation(id);
     if (id === currentConversationId) onNewChat();
-    load();
+    void load();
   };
 
   return (
@@ -67,85 +68,99 @@ export function Sidebar({
         compact ? "w-56 p-3" : "w-72 p-4"
       )}
     >
-      <div className="flex items-center gap-2 px-2 py-1.5">
-        <div className="w-8 h-8 rounded-lg bg-accent/15 flex items-center justify-center">
+      {/* ── Brand ── */}
+      <motion.div
+        initial={{ opacity: 0, x: -8 }}
+        animate={{ opacity: 1, x: 0 }}
+        className="flex items-center gap-2.5 px-2 py-1.5"
+      >
+        <div className="w-8 h-8 rounded-xl bg-accent/15 flex items-center justify-center shrink-0">
           <Sparkles className="w-4 h-4 text-accent" />
         </div>
         {!compact && (
           <div className="leading-tight">
-            <div className="font-semibold">Jarvis</div>
-            <div className="text-[11px] text-ink-mute">your assistant</div>
+            <div className="font-semibold text-[15px]">Jarvis</div>
+            <div className="text-[11px] text-ink-mute">AI Operating System</div>
           </div>
         )}
-      </div>
+      </motion.div>
 
       <ProfileSwitcher compact={compact} />
 
+      {/* ── New chat ── */}
       <button onClick={onNewChat} className="btn-primary w-full justify-center">
-        <Plus className="w-4 h-4" /> {!compact && "New chat"}
+        <Plus className="w-4 h-4" />
+        {!compact && "New chat"}
       </button>
 
-      <div className="flex-1 min-h-0 overflow-y-auto space-y-1 pr-1">
+      {/* ── Conversations ── */}
+      <div className="flex-1 min-h-0 overflow-y-auto space-y-0.5 pr-0.5">
         {!compact && (
-          <div className="text-[11px] uppercase tracking-wide text-ink-mute px-2 py-2">
-            Conversations
-          </div>
+          <div className="section-label px-2 py-2">Conversations</div>
         )}
         {loading && (
-          <div className="text-xs text-ink-mute px-2">Loading…</div>
+          <div className="flex items-center gap-1.5 px-2 py-2 text-xs text-ink-mute">
+            <span className="dot-pulse text-accent" />
+            Loading…
+          </div>
         )}
         {!loading && conversations.length === 0 && (
-          <div className="text-xs text-ink-mute px-2 py-2">No chats yet.</div>
+          <div className="text-xs text-ink-mute px-2 py-3">No chats yet.</div>
         )}
-        {conversations.map((c) => (
-          <button
-            key={c.id}
-            onClick={() => onSelectConversation(c.id)}
-            className={cn(
-              "group w-full text-left flex items-start gap-2 rounded-lg px-2.5 py-2 text-sm transition-colors",
-              c.id === currentConversationId
-                ? "bg-white/[0.06] text-ink"
-                : "text-ink-dim hover:bg-white/[0.04]"
-            )}
-          >
-            <MessageSquare className="w-4 h-4 mt-0.5 shrink-0" />
-            <span className="flex-1 truncate">{c.title || "New chat"}</span>
-            <span
-              role="button"
-              tabIndex={0}
-              onClick={(e) => remove(c.id, e)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter")
-                  remove(c.id, e as unknown as React.MouseEvent);
-              }}
-              className="opacity-0 group-hover:opacity-100 transition-opacity text-ink-mute hover:text-rose-400"
-              aria-label="Delete conversation"
+        <AnimatePresence initial={false}>
+          {conversations.map((c) => (
+            <motion.button
+              key={c.id}
+              initial={{ opacity: 0, x: -6 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -6 }}
+              onClick={() => onSelectConversation(c.id)}
+              className={cn(
+                "group w-full text-left flex items-start gap-2 rounded-xl px-2.5 py-2 text-sm transition-all",
+                c.id === currentConversationId
+                  ? "bg-accent/10 border border-accent/20 text-ink"
+                  : "text-ink-dim hover:bg-white/[0.04] hover:text-ink"
+              )}
             >
-              <Trash2 className="w-3.5 h-3.5" />
-            </span>
-          </button>
-        ))}
+              <MessageSquare className="w-4 h-4 mt-0.5 shrink-0 opacity-60" />
+              <span className="flex-1 truncate">{c.title || "New chat"}</span>
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => remove(c.id, e)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter")
+                    remove(c.id, e as unknown as React.MouseEvent);
+                }}
+                className="opacity-0 group-hover:opacity-100 transition-opacity text-ink-mute hover:text-rose-400 rounded-md p-0.5"
+                aria-label="Delete conversation"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </span>
+            </motion.button>
+          ))}
+        </AnimatePresence>
       </div>
 
-      <div className="space-y-1 border-t border-white/[0.04] pt-3">
-        <button
-          className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-dim hover:bg-white/[0.04]"
-          onClick={onOpenCustomize}
-        >
-          <LayoutGrid className="w-4 h-4" /> {!compact && "Anpassa layout"}
-        </button>
-        <button
-          className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-dim hover:bg-white/[0.04]"
-          onClick={onOpenMemory}
-        >
-          <Brain className="w-4 h-4" /> {!compact && "Memory"}
-        </button>
-        <button
-          className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-dim hover:bg-white/[0.04]"
-          onClick={onOpenSettings}
-        >
-          <Settings className="w-4 h-4" /> {!compact && "Settings"}
-        </button>
+      {/* ── Footer actions ── */}
+      <div className="space-y-0.5 border-t border-white/[0.04] pt-3">
+        {!compact && (
+          <div className="section-label px-2 py-1.5">Settings</div>
+        )}
+        {[
+          { icon: LayoutGrid, label: "Anpassa layout", action: onOpenCustomize },
+          { icon: Brain, label: "Memory", action: onOpenMemory },
+          { icon: Settings, label: "Settings", action: onOpenSettings },
+        ].map(({ icon: Icon, label, action }) => (
+          <button
+            key={label}
+            className="w-full flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm text-ink-dim hover:bg-white/[0.04] hover:text-ink transition-colors"
+            onClick={action}
+          >
+            <Icon className="w-4 h-4 shrink-0" />
+            {!compact && label}
+          </button>
+        ))}
       </div>
     </aside>
   );

@@ -71,7 +71,7 @@ export function ChatInput({
   return (
     <div className="px-4 sm:px-6 pb-5 pt-2">
       <div className="mx-auto max-w-3xl">
-        <div className="panel flex items-end gap-2 p-2 pr-2.5">
+        <div className="panel glow-input flex items-end gap-2 p-2 pr-2.5 transition-shadow duration-300">
           <button
             onClick={toggleVoice}
             className={`btn-ghost h-10 w-10 p-0 justify-center ${

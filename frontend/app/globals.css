@@ -197,6 +197,48 @@ body {
   .density-p {
     padding: calc(1rem * var(--space-unit, 1));
   }
+  /* ── Design system additions for v0-aligned UI ── */
+  .section-label {
+    @apply text-[10px] uppercase tracking-[0.12em] text-ink-mute font-semibold;
+  }
+  .icon-badge {
+    @apply w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center shrink-0;
+  }
+  .icon-badge-sm {
+    @apply w-8 h-8 rounded-lg bg-accent/15 flex items-center justify-center shrink-0;
+  }
+  /* glowing focus ring for wrapping containers (apply to the outer div) */
+  .glow-input:focus-within {
+    box-shadow:
+      0 0 0 1px rgb(var(--accent) / 0.35),
+      0 0 24px -6px rgb(var(--accent-glow) / 0.35);
+  }
+  /* status indicator dot */
+  .status-active {
+    @apply w-2 h-2 rounded-full bg-emerald-400 shrink-0;
+  }
+  .status-offline {
+    @apply w-2 h-2 rounded-full bg-white/20 shrink-0;
+  }
+  /* gradient accent top border */
+  .accent-border-top {
+    border-top: 1px solid transparent;
+    background-clip: padding-box;
+    position: relative;
+  }
+  .accent-border-top::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    top: -1px;
+    border-top: 1px solid rgb(var(--accent) / 0.4);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+  /* view header pattern */
+  .view-header {
+    @apply flex items-center gap-3 mb-8;
+  }
 }
 
 .dot-pulse {
