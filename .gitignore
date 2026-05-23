@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+env/
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+.next/
+out/
+dist/
+build/
+.npm
+.yarn
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Jarvis local data
+backend/data/
+*.sqlite
+*.sqlite3
+*.db
+jarvis.log
+.jarvis_key
+.jarvis_secret
+
+# Misc
+*.log
+coverage/
