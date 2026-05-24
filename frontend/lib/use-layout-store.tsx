@@ -31,6 +31,8 @@ export interface LayoutState {
   sidebar: SidebarMode;
   glowIntensity: number;
   compactMode: boolean;
+  /** Neural Focus Mode for the Core view (F5). Persisted immediately, outside of commit/revert. */
+  coreFocusMode: boolean;
 }
 
 type Action =
@@ -42,6 +44,7 @@ type Action =
   | { type: "SET_DENSITY"; density: Density }
   | { type: "SET_GLOW"; glowIntensity: number }
   | { type: "SET_COMPACT"; compactMode: boolean }
+  | { type: "SET_FOCUS_MODE"; value: boolean }
   | { type: "RESET_PRESET" }
   | { type: "RESET_ALL" };
 
@@ -56,6 +59,7 @@ function buildFromPreset(layoutId: LayoutId): LayoutState {
     sidebar: preset.sidebar,
     glowIntensity: 0.7,
     compactMode: preset.density === "compact",
+    coreFocusMode: false,
   };
 }
 
@@ -103,6 +107,8 @@ function reducer(state: LayoutState, action: Action): LayoutState {
         compactMode: action.compactMode,
         density: action.compactMode ? "compact" : "default",
       };
+    case "SET_FOCUS_MODE":
+      return { ...state, coreFocusMode: action.value };
     case "RESET_PRESET": {
       const preset = getLayoutPreset(state.layoutId);
       return {
@@ -168,6 +174,7 @@ function loadFromStorage(
       sidebar: parsed.sidebar ?? preset.sidebar,
       glowIntensity: parsed.glowIntensity ?? 0.7,
       compactMode: parsed.compactMode ?? preset.density === "compact",
+      coreFocusMode: parsed.coreFocusMode ?? false,
     };
   } catch {
     return null;
@@ -210,6 +217,31 @@ export function LayoutProvider({
   useEffect(() => {
     if (hydrated) applyDom(state);
   }, [state, hydrated]);
+
+  // Keep a live ref to current state so the focus-mode autosave effect can
+  // read the full layout snapshot without depending on the entire state.
+  const liveStateRef = useRef(state);
+  liveStateRef.current = state;
+
+  // Persist Neural Focus Mode immediately on toggle (independent of commit/revert).
+  // Keep snapshotRef.coreFocusMode in sync so the customize-drawer revert
+  // never accidentally undoes a focus toggle made via F5.
+  useEffect(() => {
+    if (!hydrated) return;
+    const key = storageKey(userId);
+    try {
+      const raw = localStorage.getItem(key);
+      const base = raw ? JSON.parse(raw) : {};
+      localStorage.setItem(
+        key,
+        JSON.stringify({ ...base, coreFocusMode: liveStateRef.current.coreFocusMode })
+      );
+    } catch {}
+    snapshotRef.current = {
+      ...snapshotRef.current,
+      coreFocusMode: liveStateRef.current.coreFocusMode,
+    };
+  }, [state.coreFocusMode, hydrated, userId]);
 
   const commit = useCallback(() => {
     const key = storageKey(userId);

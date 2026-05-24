@@ -29,6 +29,24 @@ const VIEWS: { id: ViewType; label: string; icon: typeof Atom }[] = [
   { id: "customize", label: "Customize", icon: Palette },
 ];
 
+/**
+ * Ordered list of "page" views (excludes drawers like Settings/Customize)
+ * used by keyboard shortcuts to cycle through with F2.
+ */
+export const VIEW_CYCLE_ORDER: ViewType[] = [
+  "core",
+  "command-center",
+  "chat",
+  "developer",
+  "memory",
+];
+
+export function nextViewInCycle(current: ViewType): ViewType {
+  const idx = VIEW_CYCLE_ORDER.indexOf(current);
+  if (idx === -1) return VIEW_CYCLE_ORDER[0];
+  return VIEW_CYCLE_ORDER[(idx + 1) % VIEW_CYCLE_ORDER.length];
+}
+
 export function ViewNavigation({ activeView, onViewChange, compact }: ViewNavigationProps) {
   const items = compact ? VIEWS.slice(0, 5) : VIEWS;
   return (

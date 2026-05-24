@@ -14,6 +14,10 @@ interface AppChromeProps {
   children: React.ReactNode;
   /** Full-screen mode (Core view) — nav floats, no top bar. */
   fullscreen?: boolean;
+  /** Fullscreen only: fade the floating nav out on idle. */
+  navIdle?: boolean;
+  /** Fullscreen only: fully unmount the floating nav (Neural Focus Mode). */
+  navHidden?: boolean;
 }
 
 export function AppChrome({
@@ -22,20 +26,33 @@ export function AppChrome({
   onOpenCustomize,
   children,
   fullscreen = false,
+  navIdle = false,
+  navHidden = false,
 }: AppChromeProps) {
   if (fullscreen) {
     return (
       <div className="h-screen w-screen overflow-hidden bg-bg relative flex flex-col">
         <BobBackground />
-        <div
-          className="fixed left-1/2 -translate-x-1/2 z-[var(--z-floating-nav)]"
-          style={{ top: "calc(env(safe-area-inset-top, 0px) + 1.25rem)" }}
-        >
-          <ViewNavigation activeView={activeView} onViewChange={onViewChange} compact />
-        </div>
+        {!navHidden && (
+          <motion.div
+            initial={{ opacity: 0, y: -16 }}
+            animate={{
+              opacity: navIdle ? 0 : 1,
+              y: navIdle ? -10 : 0,
+            }}
+            transition={{ duration: 0.45, ease: "easeOut" }}
+            className={cn(
+              "fixed left-1/2 -translate-x-1/2 z-[var(--z-floating-nav)]",
+              navIdle && "pointer-events-none"
+            )}
+            style={{ top: "calc(env(safe-area-inset-top, 0px) + 1.25rem)" }}
+          >
+            <ViewNavigation activeView={activeView} onViewChange={onViewChange} compact />
+          </motion.div>
+        )}
         <div
           className="relative z-[var(--z-content)] flex-1 min-h-0 flex flex-col"
-          style={{ paddingTop: "var(--bob-floating-nav-h)" }}
+          style={{ paddingTop: navHidden ? 0 : "var(--bob-floating-nav-h)" }}
         >
           {children}
         </div>

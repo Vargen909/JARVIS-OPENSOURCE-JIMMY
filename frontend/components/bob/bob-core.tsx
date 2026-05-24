@@ -7,6 +7,7 @@ import { BobNetwork } from "./bob-network";
 import { BobGlow } from "./bob-glow";
 import { BobPulse } from "./bob-pulse";
 import {
+  applyIntensity,
   getBobMotion,
   resolveBobSize,
   type BobSize,
@@ -25,6 +26,8 @@ interface BobCoreProps {
   size?: BobSize;
   /** Center text. Defaults to "B.O.B" — pass empty string to hide. */
   label?: string;
+  /** Multiplier on glow intensity and animation speed. 1 = baseline, >1 = more active (audio-reactive). */
+  intensity?: number;
   className?: string;
 }
 
@@ -43,6 +46,7 @@ export function BobCore({
   isListening,
   size = "lg",
   label = "B.O.B",
+  intensity = 1,
   className,
 }: BobCoreProps) {
   const state: BobState =
@@ -56,9 +60,9 @@ export function BobCore({
           : "idle");
 
   const px = resolveBobSize(size);
-  const m = getBobMotion(state);
+  const m = applyIntensity(getBobMotion(state), intensity);
   const center = px / 2;
-  const coreR = px * 0.085;
+  const coreR = px * 0.085 * (1 + Math.max(0, intensity - 1) * 0.18);
 
   // Compact variant: tiny breathing dot for headers/badges. No rings.
   if (variant === "compact") {

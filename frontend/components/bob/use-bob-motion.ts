@@ -44,6 +44,26 @@ export function getBobMotion(state: BobState): BobMotion {
   return TABLE[state] ?? TABLE.idle;
 }
 
+/**
+ * Multiplies the dynamic dimensions of a BobMotion config by an external
+ * intensity value (e.g. from microphone amplitude or a TTS amplitude
+ * estimator). 1 = unchanged, 2 = twice as loud/active, 0 = baseline glow off.
+ *
+ * The base loop duration shortens linearly with higher intensity so the
+ * orb visibly speeds up under heavy stimulus, but never goes below 0.4s
+ * to keep animation gracefully stable.
+ */
+export function applyIntensity(m: BobMotion, intensity: number): BobMotion {
+  const i = Math.max(0, intensity);
+  if (i === 1) return m;
+  return {
+    ...m,
+    glowIntensity: m.glowIntensity * i,
+    duration: Math.max(0.4, m.duration / Math.max(0.4, i)),
+    ringSpeed: Math.max(4, m.ringSpeed / Math.max(0.4, i)),
+  };
+}
+
 const SIZE_PX: Record<Exclude<BobSize, number>, number> = {
   sm: 140,
   md: 240,
