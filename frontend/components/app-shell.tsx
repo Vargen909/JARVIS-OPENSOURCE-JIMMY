@@ -46,14 +46,6 @@ export function AppShell() {
   const focusMode = layout.state.coreFocusMode && activeView === "core";
 
   const handleViewChange = useCallback((v: ViewType) => {
-    if (v === "settings") {
-      setSettingsOpen(true);
-      return;
-    }
-    if (v === "customize") {
-      setCustomizeOpen(true);
-      return;
-    }
     setActiveView(v);
   }, []);
 

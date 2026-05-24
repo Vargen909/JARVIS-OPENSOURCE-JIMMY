@@ -77,23 +77,16 @@ export function CommandOverlay({
   const { activeUser } = useJarvis();
   const [query, setQuery] = useState("");
   const [cursor, setCursor] = useState(0);
-  const [recent, setRecent] = useState<ConversationOut[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Reset query and reload recent conversations on open.
+  // Reset query on open.
   useEffect(() => {
     if (!open) return;
     setQuery("");
     setCursor(0);
     requestAnimationFrame(() => inputRef.current?.focus());
-    if (activeUser) {
-      api
-        .listConversations(activeUser.id)
-        .then((cs) => setRecent(cs.slice(0, 6)))
-        .catch(() => setRecent([]));
-    }
-  }, [open, activeUser]);
+  }, [open]);
 
   const items = useMemo<CommandItem[]>(() => {
     const viewItems: CommandItem[] = [
@@ -120,18 +113,6 @@ export function CommandOverlay({
         },
       },
     ];
-
-    const recentItems: CommandItem[] = recent.map((c) => ({
-      id: `conv:${c.id}`,
-      label: c.title || `Conversation #${c.id}`,
-      hint: c.confidential ? "Confidential" : undefined,
-      icon: MessageSquare,
-      group: "Recent",
-      run: () => {
-        onSelectView("chat");
-        onClose();
-      },
-    }));
 
     const actionItems: CommandItem[] = [
       {
@@ -193,9 +174,8 @@ export function CommandOverlay({
       },
     ];
 
-    return [...viewItems, ...recentItems, ...actionItems];
+    return [...viewItems, ...actionItems];
   }, [
-    recent,
     onSelectView,
     onClose,
     onNewConversation,
