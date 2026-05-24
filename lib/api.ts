@@ -9,9 +9,11 @@ import type {
   UserOut,
 } from "./types";
 
+// Use the Next.js API proxy to reach the Python backend
+// This allows the preview to work in v0's sandbox environment
 const BASE =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
-  "http://127.0.0.1:8765";
+  "/api/bob";
 
 const isDev = process.env.NODE_ENV !== "production";
 
