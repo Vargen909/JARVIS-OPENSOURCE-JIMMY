@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
-  Code,
   Zap,
   Key,
   CheckCircle,
@@ -11,6 +10,7 @@ import {
   Terminal,
   RefreshCw,
 } from "lucide-react";
+import { BobCore } from "@/components/bob/bob-core";
 import { useJarvis } from "@/components/providers";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -81,11 +81,9 @@ export function DeveloperView() {
           className="view-header justify-between"
         >
           <div className="flex items-center gap-3">
-            <div className="icon-badge">
-              <Code className="w-5 h-5 text-accent" />
-            </div>
+            <BobCore variant="compact" size={44} className="shrink-0" />
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight">Developer</h1>
+              <h1 className="t-h1">Developer</h1>
               <p className="text-sm text-ink-dim mt-0.5">
                 Engine status, API health, and system diagnostics
               </p>

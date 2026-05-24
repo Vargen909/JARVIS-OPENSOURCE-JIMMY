@@ -30,6 +30,7 @@ const config: Config = {
       },
       fontFamily: {
         sans: [
+          "var(--font-sans)",
           "Inter",
           "ui-sans-serif",
           "system-ui",
@@ -38,7 +39,13 @@ const config: Config = {
           "Roboto",
           "sans-serif",
         ],
-        mono: ["JetBrains Mono", "ui-monospace", "Menlo", "monospace"],
+        mono: [
+          "var(--font-mono)",
+          "JetBrains Mono",
+          "ui-monospace",
+          "Menlo",
+          "monospace",
+        ],
       },
       boxShadow: {
         glow: "0 0 calc(40px * var(--glow-intensity)) -10px rgb(var(--accent-glow) / 0.45)",

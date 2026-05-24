@@ -1,4 +1,4 @@
-"""FastAPI entrypoint for Jarvis."""
+"""FastAPI entrypoint for B.O.B."""
 
 from __future__ import annotations
 
@@ -68,7 +68,7 @@ app = create_app()
 
 def main() -> None:
     import uvicorn
-    uvicorn.run("jarvis.main:app", host=host(), port=port(), reload=False)
+    uvicorn.run("bob.main:app", host=host(), port=port(), reload=False)
 
 
 if __name__ == "__main__":

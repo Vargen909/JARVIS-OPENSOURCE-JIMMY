@@ -2,16 +2,15 @@
 
 import { motion } from "framer-motion";
 import { Sparkles, Loader2 } from "lucide-react";
-import { NeuralBrain } from "./neural-brain";
+import { BobCore } from "@/components/bob/bob-core";
+import { resolveBobSize } from "@/components/bob/use-bob-motion";
 import { useJarvis } from "@/components/providers";
 import { useLayout } from "@/lib/use-layout-store";
 import { cn } from "@/lib/utils";
 import type { BrainSize } from "@/lib/layouts";
 
-function mapBrainSize(size: BrainSize): "small" | "medium" | "large" {
-  if (size === "sm") return "small";
-  if (size === "lg") return "large";
-  return "medium";
+function mapBrainSize(s: BrainSize): "sm" | "md" | "lg" {
+  return s;
 }
 
 interface DashboardCenterProps {
@@ -24,6 +23,7 @@ export function DashboardCenter({ isThinking, statusMessage }: DashboardCenterPr
   const { state } = useLayout();
 
   const brainSize = mapBrainSize(state.brainSize);
+  const orbPx = resolveBobSize(brainSize);
 
   const currentEngine = engines.find((e) => e.id === activeUser?.preferred_engine);
   const currentModelId =
@@ -32,25 +32,17 @@ export function DashboardCenter({ isThinking, statusMessage }: DashboardCenterPr
     currentEngine?.models.find((m) => m.id === currentModelId) ||
     currentEngine?.models[0];
   const modelLabel =
-    currentModel?.label || currentModel?.id || currentEngine?.label || "Jarvis";
+    currentModel?.label || currentModel?.id || currentEngine?.label || "B.O.B";
 
   return (
-    <div className="flex flex-col items-center justify-center flex-1 min-h-0 p-6 overflow-y-auto">
+    <div className="flex flex-col items-center justify-center flex-1 min-h-0 p-6 overflow-y-auto overflow-x-hidden max-w-full">
       <motion.div
         initial={{ scale: 0.85, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
-        className="relative"
+        className="relative max-w-full"
       >
-        <div
-          aria-hidden
-          className={cn(
-            "absolute inset-0 rounded-full blur-3xl transition-all duration-1000",
-            isThinking ? "scale-125 opacity-60" : "scale-100 opacity-30"
-          )}
-          style={{ background: "rgb(var(--accent) / 0.12)" }}
-        />
-        <NeuralBrain size={brainSize} isThinking={isThinking} />
+        <BobCore variant="network" size={orbPx} isThinking={isThinking} />
       </motion.div>
 
       <motion.div
@@ -79,12 +71,10 @@ export function DashboardCenter({ isThinking, statusMessage }: DashboardCenterPr
 
         {!isThinking && !statusMessage && activeUser && (
           <div className="space-y-2">
-            <h2 className="text-2xl font-semibold tracking-tight">
-              Hej {activeUser.name}, jag är Jarvis
-            </h2>
+            <h2 className="t-h1">Hej {activeUser.name}, jag är B.O.B</h2>
             <p className="text-sm text-ink-dim leading-relaxed">
-              Din personliga AI-assistent. Skriv ett kommando nedan eller byt vy till Chat för
-              full konversationshistorik.
+              Din personliga AI-assistent. Skriv ett kommando nedan eller byt vy
+              till Chat för full konversationshistorik.
             </p>
           </div>
         )}
@@ -94,17 +84,19 @@ export function DashboardCenter({ isThinking, statusMessage }: DashboardCenterPr
             <p className="text-xl font-bold tabular-nums">
               {engines.filter((e) => e.available).length}
             </p>
-            <p className="text-[10px] text-ink-mute uppercase tracking-wide">Engines online</p>
+            <p className="t-meta">Engines online</p>
           </div>
           <div className="w-px h-8 bg-white/[0.08]" />
           <div className="text-center">
             <p className="text-xl font-bold capitalize">{activeUser?.operating_mode}</p>
-            <p className="text-[10px] text-ink-mute uppercase tracking-wide">Mode</p>
+            <p className="t-meta">Mode</p>
           </div>
           <div className="w-px h-8 bg-white/[0.08]" />
           <div className="text-center">
-            <p className="text-xl font-bold">{currentEngine?.label?.split(" ")[0] ?? "—"}</p>
-            <p className="text-[10px] text-ink-mute uppercase tracking-wide">Provider</p>
+            <p className="text-xl font-bold">
+              {currentEngine?.label?.split(" ")[0] ?? "—"}
+            </p>
+            <p className="t-meta">Provider</p>
           </div>
         </div>
       </motion.div>

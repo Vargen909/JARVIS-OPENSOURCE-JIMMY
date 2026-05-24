@@ -95,7 +95,7 @@ export function AppShell() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
-            className="flex flex-1 min-h-0 h-[calc(100vh-3.5rem)] sm:h-[calc(100vh-3.25rem)]"
+            className="flex flex-1 min-h-0 w-full"
           >
             {activeView === "command-center" && (
               <CommandCenterView

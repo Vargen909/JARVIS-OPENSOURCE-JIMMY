@@ -2,12 +2,14 @@ param(
     [int]$Port = 8765
 )
 
-# Stops any process listening on the Jarvis backend port.
+# Stops any process listening on the B.O.B backend port.
 # Idempotent — safe to run if nothing is listening.
 
 $ErrorActionPreference = "SilentlyContinue"
 
-if ($env:JARVIS_PORT) {
+if ($env:BOB_PORT) {
+    $Port = [int]$env:BOB_PORT
+} elseif ($env:JARVIS_PORT) {
     $Port = [int]$env:JARVIS_PORT
 }
 

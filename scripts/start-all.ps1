@@ -9,14 +9,14 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path $PSScriptRoot -Parent
 Set-Location $root
 
-Write-Host "==> Stopping any previous Jarvis processes..."
+Write-Host "==> Stopping any previous B.O.B processes..."
 & powershell -ExecutionPolicy Bypass -File (Join-Path $root "scripts\stop-all.ps1") | Out-Null
 
 Write-Host "==> Starting backend (detached)..."
 & powershell -ExecutionPolicy Bypass -File (Join-Path $root "scripts\start-backend.ps1") -Detached
 
 Write-Host "==> Waiting for backend to become healthy..."
-$backendPort = if ($env:JARVIS_PORT) { [int]$env:JARVIS_PORT } else { 8765 }
+$backendPort = if ($env:BOB_PORT) { [int]$env:BOB_PORT } elseif ($env:JARVIS_PORT) { [int]$env:JARVIS_PORT } else { 8765 }
 $ready = $false
 for ($i = 0; $i -lt 20; $i++) {
     Start-Sleep -Milliseconds 500
@@ -26,7 +26,7 @@ for ($i = 0; $i -lt 20; $i++) {
     } catch { }
 }
 if (-not $ready) {
-    Write-Warning "Backend did not respond at http://127.0.0.1:$backendPort within 10s. Check jarvis.log."
+    Write-Warning "Backend did not respond at http://127.0.0.1:$backendPort within 10s. Check bob.log."
 } else {
     Write-Host "Backend healthy at http://127.0.0.1:$backendPort"
 }

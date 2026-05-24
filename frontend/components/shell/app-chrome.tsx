@@ -1,9 +1,10 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Sparkles, Settings2 } from "lucide-react";
+import { Settings2 } from "lucide-react";
 import { ViewNavigation, type ViewType } from "@/components/view-navigation";
-import { useLayout } from "@/lib/use-layout-store";
+import { BobCore } from "@/components/bob/bob-core";
+import { BobBackground } from "@/components/bob/bob-background";
 import { cn } from "@/lib/utils";
 
 interface AppChromeProps {
@@ -11,29 +12,8 @@ interface AppChromeProps {
   onViewChange: (view: ViewType) => void;
   onOpenCustomize: () => void;
   children: React.ReactNode;
-  /** Full-screen mode (Core view) — nav floats, no top bar */
+  /** Full-screen mode (Core view) — nav floats, no top bar. */
   fullscreen?: boolean;
-}
-
-/** Shared cinematic background used across all views */
-export function CinematicBackground({ opacity = 1 }: { opacity?: number }) {
-  const { state } = useLayout();
-  const glowOpacity = (state.glowIntensity ?? 0.7) * opacity;
-
-  return (
-    <div
-      aria-hidden
-      className="fixed inset-0 pointer-events-none z-0"
-      style={{
-        opacity: glowOpacity,
-        background: `
-          radial-gradient(ellipse at 50% 0%, rgb(var(--accent-glow) / 0.18) 0%, transparent 55%),
-          radial-gradient(ellipse at 0% 50%, rgb(var(--accent) / 0.06) 0%, transparent 45%),
-          radial-gradient(ellipse at 100% 50%, rgb(var(--accent) / 0.06) 0%, transparent 45%)
-        `,
-      }}
-    />
-  );
 }
 
 export function AppChrome({
@@ -45,35 +25,46 @@ export function AppChrome({
 }: AppChromeProps) {
   if (fullscreen) {
     return (
-      <div className="h-screen w-screen overflow-hidden bg-bg relative">
-        <CinematicBackground />
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-40">
-          <ViewNavigation activeView={activeView} onViewChange={onViewChange} />
+      <div className="h-screen w-screen overflow-hidden bg-bg relative flex flex-col">
+        <BobBackground />
+        <div
+          className="fixed left-1/2 -translate-x-1/2 z-[var(--z-floating-nav)]"
+          style={{ top: "calc(env(safe-area-inset-top, 0px) + 1.25rem)" }}
+        >
+          <ViewNavigation activeView={activeView} onViewChange={onViewChange} compact />
         </div>
-        <div className="relative z-10 h-full pt-20">{children}</div>
+        <div
+          className="relative z-[var(--z-content)] flex-1 min-h-0 flex flex-col"
+          style={{ paddingTop: "var(--bob-floating-nav-h)" }}
+        >
+          {children}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-bg relative">
-      <CinematicBackground />
-      <header className="relative z-20 shrink-0 flex items-center justify-between px-4 sm:px-6 py-2.5 border-b border-white/[0.04] bg-bg/50 backdrop-blur-xl">
+    <div className="h-screen w-screen flex flex-col bg-bg relative overflow-hidden">
+      <BobBackground />
+
+      {/* ── Top header ── */}
+      <header
+        className="relative z-[var(--z-chrome)] shrink-0 flex items-center justify-between gap-3 px-4 sm:px-6 border-b border-white/[0.04] bg-bg/55 backdrop-blur-xl"
+        style={{ height: "var(--bob-nav-h)" }}
+      >
         <motion.div
           initial={{ opacity: 0, x: -12 }}
           animate={{ opacity: 1, x: 0 }}
-          className="flex items-center gap-2.5"
+          className="flex items-center gap-2.5 shrink-0"
         >
-          <div className="w-8 h-8 rounded-xl bg-accent/15 flex items-center justify-center">
-            <Sparkles className="w-4 h-4 text-accent" />
-          </div>
-          <span className="font-semibold text-[15px]">Jarvis</span>
+          <BobCore variant="compact" size={28} className="shrink-0" />
+          <span className="font-semibold text-[15px] tracking-tight">B.O.B</span>
           <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20 font-mono">
             OS
           </span>
         </motion.div>
 
-        <div className="absolute left-1/2 -translate-x-1/2 hidden sm:block">
+        <div className="hidden md:flex flex-1 justify-center min-w-0">
           <ViewNavigation
             activeView={activeView}
             onViewChange={onViewChange}
@@ -84,12 +75,13 @@ export function AppChrome({
         <motion.div
           initial={{ opacity: 0, x: 12 }}
           animate={{ opacity: 1, x: 0 }}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 shrink-0"
         >
           <button
             type="button"
             className="btn-ghost py-1.5 px-3 text-xs"
             onClick={onOpenCustomize}
+            title="Customize"
           >
             <Settings2 className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Customize</span>
@@ -97,12 +89,18 @@ export function AppChrome({
         </motion.div>
       </header>
 
-      {/* Mobile nav below header */}
-      <div className="sm:hidden relative z-20 flex justify-center py-2 border-b border-white/[0.04] bg-bg/40 backdrop-blur">
+      {/* ── Mobile nav strip ── */}
+      <div
+        className="md:hidden relative z-[var(--z-chrome)] shrink-0 flex justify-center items-center border-b border-white/[0.04] bg-bg/40 backdrop-blur"
+        style={{ height: "var(--bob-mobile-nav-h)" }}
+      >
         <ViewNavigation activeView={activeView} onViewChange={onViewChange} compact />
       </div>
 
-      <div className={cn("relative z-10 flex flex-1 min-h-0")}>{children}</div>
+      {/* ── Body ── */}
+      <div className={cn("relative z-[var(--z-content)] flex flex-1 min-h-0")}>
+        {children}
+      </div>
     </div>
   );
 }

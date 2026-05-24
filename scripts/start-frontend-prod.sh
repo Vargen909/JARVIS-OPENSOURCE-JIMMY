@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT/frontend"
 
-PORT="${JARVIS_FRONTEND_PORT:-3000}"
+PORT="${BOB_FRONTEND_PORT:-${JARVIS_FRONTEND_PORT:-3000}}"
 SKIP_BUILD=0
 for arg in "$@"; do
   case "$arg" in

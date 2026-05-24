@@ -11,7 +11,7 @@ import {
 import { api } from "@/lib/api";
 import type { AppInfo, EngineInfo, UserOut } from "@/lib/types";
 
-interface JarvisCtx {
+interface BobCtx {
   info: AppInfo | null;
   users: UserOut[];
   engines: EngineInfo[];
@@ -21,11 +21,30 @@ interface JarvisCtx {
   loading: boolean;
 }
 
-const Ctx = createContext<JarvisCtx | null>(null);
+const Ctx = createContext<BobCtx | null>(null);
 
-const ACTIVE_USER_KEY = "jarvis.activeUserId";
+const ACTIVE_USER_KEY = "bob.activeUserId";
+const LEGACY_ACTIVE_USER_KEY = "jarvis.activeUserId";
 
-export function JarvisProvider({ children }: { children: React.ReactNode }) {
+/**
+ * One-shot localStorage migration: copy "jarvis.activeUserId" to its new key
+ * if the new one is missing, then remove the old one. Idempotent.
+ */
+function migrateActiveUserKey() {
+  if (typeof window === "undefined") return;
+  try {
+    if (localStorage.getItem(ACTIVE_USER_KEY) != null) return;
+    const legacy = localStorage.getItem(LEGACY_ACTIVE_USER_KEY);
+    if (legacy != null) {
+      localStorage.setItem(ACTIVE_USER_KEY, legacy);
+      localStorage.removeItem(LEGACY_ACTIVE_USER_KEY);
+    }
+  } catch {
+    /* ignore quota/security errors */
+  }
+}
+
+export function BobProvider({ children }: { children: React.ReactNode }) {
   const [info, setInfo] = useState<AppInfo | null>(null);
   const [users, setUsers] = useState<UserOut[]>([]);
   const [engines, setEngines] = useState<EngineInfo[]>([]);
@@ -42,6 +61,7 @@ export function JarvisProvider({ children }: { children: React.ReactNode }) {
 
   const refresh = useCallback(async () => {
     try {
+      migrateActiveUserKey();
       const [i, u, e] = await Promise.all([
         api.info(),
         api.listUsers(),
@@ -85,8 +105,14 @@ export function JarvisProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useJarvis() {
+export function useBob() {
   const ctx = useContext(Ctx);
-  if (!ctx) throw new Error("useJarvis must be used within JarvisProvider");
+  if (!ctx) throw new Error("useBob must be used within BobProvider");
   return ctx;
 }
+
+/* ── Legacy aliases (deprecated, kept for backward compatibility) ── */
+/** @deprecated use BobProvider */
+export const JarvisProvider = BobProvider;
+/** @deprecated use useBob */
+export const useJarvis = useBob;

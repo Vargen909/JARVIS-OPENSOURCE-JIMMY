@@ -3,22 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUp, Clock, Activity, Sparkles, Mic, MicOff } from "lucide-react";
-import { NeuralCoreV2 } from "./neural-core-v2";
+import { BobCore } from "./bob/bob-core";
 import { useJarvis } from "./providers";
 import { api } from "@/lib/api";
 import type { MessageOut } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 /**
- * Cinematic core view ported from the v0 design.
+ * Cinematic full-screen Core view.
  *
- * Uses the real Jarvis chat backend (no mocks):
- * - posts via api.chat()
- * - persists conversations
- * - reflects engine + model from useJarvis()
- *
- * The neural core's state is driven by real send/receive lifecycle
- * (idle -> thinking -> speaking -> idle).
+ * Real backend chat (api.chat() with persistence) drives the BobCore state
+ * machine: idle → thinking → speaking → idle. Layout is height-aware so the
+ * orb never gets cropped on short viewports; the page itself never scrolls.
  */
 interface CoreViewProps {
   conversationId: number | null;
@@ -39,6 +35,8 @@ export function CoreView({
   const [lastReply, setLastReply] = useState<MessageOut | null>(null);
   const [now, setNow] = useState(new Date());
   const [listening, setListening] = useState(false);
+  const [vw, setVw] = useState(0);
+  const [vh, setVh] = useState(0);
   const recRef = useRef<unknown>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -51,6 +49,17 @@ export function CoreView({
     inputRef.current?.focus();
   }, []);
 
+  // Track viewport so the orb can scale by both width AND height (avoids vertical clipping).
+  useEffect(() => {
+    const update = () => {
+      setVw(window.innerWidth);
+      setVh(window.innerHeight);
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
   if (!activeUser) return null;
 
   const currentEngine = engines.find((e) => e.id === activeUser.preferred_engine);
@@ -60,7 +69,14 @@ export function CoreView({
     currentEngine?.models.find((m) => m.id === currentModelId) ||
     currentEngine?.models[0];
   const modelLabel =
-    currentModel?.label || currentModel?.id || currentEngine?.label || "Jarvis";
+    currentModel?.label || currentModel?.id || currentEngine?.label || "B.O.B";
+
+  // Reserve ~360px for header(60) + state text(80) + input(160) + safety paddings.
+  // Orb takes the smaller of (viewport width - margin) and (viewport height - reserved).
+  const reservedH = 360;
+  const horizCap = vw > 0 ? Math.max(220, vw - 80) : 380;
+  const vertCap = vh > 0 ? Math.max(220, vh - reservedH) : 380;
+  const orbSize = Math.min(480, horizCap, vertCap);
 
   const send = async () => {
     if (!text.trim() || pending || !activeUser) return;
@@ -82,7 +98,6 @@ export function CoreView({
         onConversationCreated(res.conversation_id);
         refresh();
       }
-      // Cosmetic: flip back to idle after the user has had a moment to read.
       const t = setTimeout(() => setSpeaking(false), 2500);
       return () => clearTimeout(t);
     } catch (e) {
@@ -144,25 +159,13 @@ export function CoreView({
   });
 
   return (
-    <div className="relative h-full w-full flex flex-col items-center overflow-hidden">
-      {/* Cinematic ambient gradient */}
-      <div
-        aria-hidden
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: `
-            radial-gradient(ellipse 80% 60% at 50% 35%, rgb(var(--accent-glow) / 0.18) 0%, transparent 60%),
-            radial-gradient(ellipse 60% 40% at 50% 50%, rgb(var(--accent) / 0.08) 0%, transparent 50%)
-          `,
-        }}
-      />
-
+    <div className="relative h-full w-full flex flex-col items-center min-h-0">
       {/* Top status bar */}
       <motion.div
         initial={{ opacity: 0, y: -12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="relative z-10 w-full flex items-center justify-between px-6 py-5 sm:px-10"
+        className="relative z-10 w-full flex items-center justify-between px-6 py-4 sm:px-10 shrink-0"
       >
         <div className="flex items-center gap-3 text-ink-dim">
           <Clock className="h-4 w-4" />
@@ -193,15 +196,16 @@ export function CoreView({
         </div>
       </motion.div>
 
-      {/* Centerpiece: neural core + state text */}
-      <div className="relative z-10 flex-1 flex flex-col items-center justify-center w-full">
+      {/* Centerpiece: B.O.B core + state text */}
+      <div className="relative z-10 flex-1 min-h-0 flex flex-col items-center justify-center w-full px-6">
         <motion.div
           initial={{ opacity: 0, scale: 0.85 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.7, ease: "easeOut" }}
         >
-          <NeuralCoreV2
-            size={Math.min(420, typeof window !== "undefined" ? window.innerWidth - 80 : 380)}
+          <BobCore
+            variant="cinematic"
+            size={orbSize}
             isThinking={pending}
             isSpeaking={speaking}
             isListening={listening}
@@ -291,7 +295,7 @@ export function CoreView({
       </div>
 
       {/* Bottom command bar */}
-      <div className="relative z-10 w-full max-w-3xl px-6 pb-8">
+      <div className="relative z-10 w-full max-w-3xl px-6 pb-8 shrink-0">
         {error && (
           <div className="mb-3 text-center text-sm text-rose-400">{error}</div>
         )}
@@ -324,7 +328,7 @@ export function CoreView({
                     void send();
                   }
                 }}
-                placeholder="Fråga Jarvis något…"
+                placeholder="Fråga B.O.B något…"
                 disabled={pending}
                 className="flex-1 resize-none bg-transparent outline-none px-2 py-2 text-[15px] text-ink placeholder:text-ink-mute"
                 style={{ minHeight: 40, maxHeight: 150 }}

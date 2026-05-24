@@ -80,7 +80,7 @@ export function ApiKeysPanel() {
       } else {
         showToast(
           "warn",
-          "Settings saved, but backend refresh failed. Please restart Jarvis."
+          "Settings saved, but backend refresh failed. Please restart B.O.B."
         );
       }
     } catch (e) {

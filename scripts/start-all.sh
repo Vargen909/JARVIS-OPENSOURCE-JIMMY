@@ -12,9 +12,9 @@ for arg in "$@"; do
   esac
 done
 
-BACKEND_PORT="${JARVIS_PORT:-8765}"
+BACKEND_PORT="${BOB_PORT:-${JARVIS_PORT:-8765}}"
 
-echo "==> Stopping any previous Jarvis processes..."
+echo "==> Stopping any previous B.O.B processes..."
 bash "${ROOT}/scripts/stop-all.sh" || true
 
 echo "==> Starting backend (detached)..."
@@ -26,9 +26,9 @@ source .venv/bin/activate
 python -m pip install --upgrade pip >/dev/null
 pip install -q -r backend/requirements.txt
 export PYTHONPATH="${ROOT}/backend"
-nohup python -m jarvis.main >"${ROOT}/jarvis.log" 2>"${ROOT}/jarvis.log.err" &
+nohup python -m bob.main >"${ROOT}/bob.log" 2>"${ROOT}/bob.log.err" &
 BACKEND_PID=$!
-echo "Backend PID: ${BACKEND_PID} (log: ${ROOT}/jarvis.log)"
+echo "Backend PID: ${BACKEND_PID} (log: ${ROOT}/bob.log)"
 
 echo "==> Waiting for backend to become healthy..."
 ready=0
@@ -42,7 +42,7 @@ done
 if [ "$ready" -eq 1 ]; then
   echo "Backend healthy at http://127.0.0.1:${BACKEND_PORT}"
 else
-  echo "WARNING: backend did not respond at http://127.0.0.1:${BACKEND_PORT} within 10s. Check jarvis.log." >&2
+  echo "WARNING: backend did not respond at http://127.0.0.1:${BACKEND_PORT} within 10s. Check bob.log." >&2
 fi
 
 echo "==> Starting frontend..."

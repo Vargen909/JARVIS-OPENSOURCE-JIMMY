@@ -19,11 +19,11 @@ pip install -q -r backend/requirements.txt
 $env:PYTHONPATH = "$root\backend"
 
 if ($Detached) {
-    $log = Join-Path $root "jarvis.log"
-    Write-Host "Starting Jarvis backend in background. Log: $log"
+    $log = Join-Path $root "bob.log"
+    Write-Host "Starting B.O.B backend in background. Log: $log"
     $py = Join-Path $root ".venv\Scripts\python.exe"
     Start-Process -FilePath $py `
-        -ArgumentList "-m", "jarvis.main" `
+        -ArgumentList "-m", "bob.main" `
         -WorkingDirectory $root `
         -RedirectStandardOutput $log `
         -RedirectStandardError "$log.err" `
@@ -31,5 +31,5 @@ if ($Detached) {
     Start-Sleep -Seconds 3
     Write-Host "Backend running at http://127.0.0.1:8765"
 } else {
-    python -m jarvis.main
+    python -m bob.main
 }

@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Check, ChevronRight, Sparkles } from "lucide-react";
+import { Check, ChevronRight } from "lucide-react";
 import { useJarvis } from "./providers";
+import { BobCore } from "./bob/bob-core";
 import { api } from "@/lib/api";
 import { Select } from "./ui/select";
 import { SECURITY_LEVELS } from "@/lib/utils";
@@ -104,13 +105,11 @@ export function Onboarding() {
         transition={{ duration: 0.3 }}
       >
         <div className="px-8 pt-8 pb-2 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center">
-            <Sparkles className="w-5 h-5 text-accent" />
-          </div>
+          <BobCore variant="compact" size={40} className="shrink-0" />
           <div>
-            <h1 className="text-xl font-semibold">Welcome to Jarvis</h1>
+            <h1 className="t-h2">Welcome to B.O.B</h1>
             <p className="text-ink-dim text-sm">
-              Let's set up your personal AI assistant.
+              Let&apos;s set up your personal AI operating system.
             </p>
           </div>
         </div>
@@ -132,7 +131,7 @@ export function Onboarding() {
           {step === "language" && (
             <Step
               title="Pick your language"
-              hint="Jarvis auto-detects, but you can lock a default."
+              hint="B.O.B auto-detects, but you can lock a default."
             >
               <Select value={language} onChange={setLanguage} options={LANGS} />
             </Step>
@@ -155,7 +154,7 @@ export function Onboarding() {
 
           {step === "profile" && (
             <Step
-              title="Tell Jarvis about you"
+              title="Tell B.O.B about you"
               hint="Optional. Used only to make answers personal. Stored locally and encrypted."
             >
               <div className="grid grid-cols-2 gap-3">
@@ -196,7 +195,7 @@ export function Onboarding() {
           {step === "security" && (
             <Step
               title="Security strictness"
-              hint="How often Jarvis should ask before doing things on your machine."
+              hint="How often B.O.B should ask before doing things on your machine."
             >
               <div className="grid gap-2">
                 {SECURITY_LEVELS.map((s) => (
@@ -264,7 +263,7 @@ export function Onboarding() {
           {step === "finish" && (
             <Step
               title="All set"
-              hint="Jarvis is ready. You can change anything later in settings."
+              hint="B.O.B is ready. You can change anything later in settings."
             >
               <div className="rounded-xl bg-white/[0.03] p-4 text-sm space-y-1">
                 <div>
@@ -296,7 +295,7 @@ export function Onboarding() {
             </button>
           ) : (
             <button className="btn-primary" onClick={finish} disabled={busy}>
-              {busy ? "Setting up…" : "Enter Jarvis"}
+              {busy ? "Setting up…" : "Enter B.O.B"}
             </button>
           )}
         </div>

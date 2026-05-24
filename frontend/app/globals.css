@@ -2,7 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Default palette: Neural Blue ── */
+/* ────────────────────────────────────────────────────────────────────────────
+   B.O.B Design System — global tokens
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/* Default palette: Neural Blue */
 :root,
 [data-palette="neural-blue"] {
   color-scheme: dark;
@@ -17,8 +21,6 @@
   --accent-glow: 156 180 255;
   --border: 34 39 52;
   --ring: 124 156 255;
-  --glow-intensity: 1;
-  --brain-scale: 1;
 }
 
 [data-palette="violet"] {
@@ -91,9 +93,21 @@
   --ring: 245 158 11;
 }
 
-/* ── shadcn-style alias tokens for v0-design components ──
-   These map the v0 design's named tokens onto our existing RGB
-   palette so adapted v0 components work without rewriting them. */
+/* ── Cross-palette runtime variables ──
+   These propagate to every palette so JS-driven adjustments work the same
+   regardless of which color palette is active. */
+:root,
+[data-palette="neural-blue"],
+[data-palette="violet"],
+[data-palette="green"],
+[data-palette="arctic"],
+[data-palette="dark-matter"],
+[data-palette="amber"] {
+  --glow-intensity: 1;
+  --brain-scale: 1;
+}
+
+/* ── shadcn-style alias tokens (for legacy v0 component shims) ── */
 :root {
   --primary: var(--accent);
   --primary-foreground: var(--ink);
@@ -107,8 +121,38 @@
   --background: var(--bg);
   --glow: var(--accent-glow);
   --glow-muted: var(--accent);
+
+  /* ── Z-index spec ──
+     z-bg .......... 0   (cinematic background)
+     z-content ..... 10  (page content)
+     z-chrome ...... 20  (top nav / app header)
+     z-dropdown .... 30  (engine picker, selects)
+     z-floating-nav  40  (Core fullscreen nav pill)
+     z-webview ..... 45  (embedded webview)
+     z-modal ....... 50  (modals, drawers)
+   */
+  --z-bg: 0;
+  --z-content: 10;
+  --z-chrome: 20;
+  --z-dropdown: 30;
+  --z-floating-nav: 40;
+  --z-webview: 45;
+  --z-modal: 50;
+
+  /* Layout heights — used to keep content from clipping under chrome */
+  --bob-nav-h: 56px;            /* desktop top header */
+  --bob-mobile-nav-h: 48px;     /* mobile pill nav strip below header */
+  --bob-floating-nav-h: 64px;   /* floating nav band on Core (top-5 + content) */
 }
 
+/* ── Density ── */
+[data-density="compact"]  { --space-unit: 0.75; }
+[data-density="default"]  { --space-unit: 1;    }
+[data-density="spacious"] { --space-unit: 1.25; }
+
+/* ────────────────────────────────────────────────────────────────────────────
+   Base
+   ──────────────────────────────────────────────────────────────────────────── */
 html,
 body {
   @apply bg-bg text-ink antialiased;
@@ -116,111 +160,66 @@ body {
     background-color 0.35s ease,
     color 0.25s ease;
   background-image:
-    radial-gradient(
-      1200px 600px at 50% -10%,
-      rgb(var(--accent-glow) / 0.18),
-      transparent 60%
-    ),
-    radial-gradient(
-      900px 500px at 100% 100%,
-      rgb(var(--accent) / 0.06),
-      transparent 60%
-    );
+    radial-gradient(1200px 600px at 50% -10%, rgb(var(--accent-glow) / 0.18), transparent 60%),
+    radial-gradient(900px 500px at 100% 100%, rgb(var(--accent) / 0.06), transparent 60%);
   background-attachment: fixed;
 }
 
-* {
-  @apply border-border;
-}
+* { @apply border-border; }
 
-::selection {
-  background: rgb(var(--accent) / 0.35);
-}
+::selection { background: rgb(var(--accent) / 0.35); }
 
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.16);
-}
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.08); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.16); }
 
-/* Density */
-[data-density="compact"] {
-  --space-unit: 0.75;
-}
-[data-density="default"] {
-  --space-unit: 1;
-}
-[data-density="spacious"] {
-  --space-unit: 1.25;
-}
-
+/* ────────────────────────────────────────────────────────────────────────────
+   Component layer
+   ──────────────────────────────────────────────────────────────────────────── */
 @layer components {
-  .glass {
-    @apply bg-white/[0.04] backdrop-blur-xl border border-white/[0.06];
-  }
-  .glass-strong {
-    @apply bg-white/[0.06] backdrop-blur-2xl border border-white/[0.08];
-  }
-  .panel {
-    @apply rounded-2xl border border-white/[0.06] bg-bg-card/80 shadow-card backdrop-blur-xl;
-  }
-  .panel-strong {
-    @apply rounded-2xl border border-white/[0.08] bg-bg-card/90 shadow-card backdrop-blur-2xl;
-  }
+  .glass        { @apply bg-white/[0.04] backdrop-blur-xl  border border-white/[0.06]; }
+  .glass-strong { @apply bg-white/[0.06] backdrop-blur-2xl border border-white/[0.08]; }
+  .panel        { @apply rounded-2xl border border-white/[0.06] bg-bg-card/80 shadow-card backdrop-blur-xl; }
+  .panel-strong { @apply rounded-2xl border border-white/[0.08] bg-bg-card/90 shadow-card backdrop-blur-2xl; }
+
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium
-           transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed;
+           transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40;
   }
-  .btn-primary {
-    @apply btn bg-accent text-white hover:bg-accent-soft shadow-glow;
-  }
-  .btn-ghost {
-    @apply btn bg-white/[0.03] text-ink hover:bg-white/[0.07] border border-white/[0.06];
-  }
+  .btn-primary { @apply btn bg-accent text-white hover:bg-accent-soft shadow-glow; }
+  .btn-ghost   { @apply btn bg-white/[0.03] text-ink hover:bg-white/[0.07] border border-white/[0.06]; }
+
   .input {
     @apply w-full rounded-xl bg-bg-soft/80 border border-white/[0.06] px-3 py-2 text-sm
-           text-ink placeholder:text-ink-mute outline-none focus:border-accent/60 focus:ring-2 focus:ring-accent/20;
+           text-ink placeholder:text-ink-mute outline-none
+           focus:border-accent/60 focus:ring-2 focus:ring-accent/20;
   }
+
   .chip {
     @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium
            bg-white/[0.05] border border-white/[0.06] text-ink-dim;
   }
-  .density-gap {
-    gap: calc(0.75rem * var(--space-unit, 1));
-  }
-  .density-p {
-    padding: calc(1rem * var(--space-unit, 1));
-  }
-  /* ── Design system additions for v0-aligned UI ── */
+
+  .density-gap { gap: calc(0.75rem * var(--space-unit, 1)); }
+  .density-p   { padding: calc(1rem * var(--space-unit, 1)); }
+
   .section-label {
     @apply text-[10px] uppercase tracking-[0.12em] text-ink-mute font-semibold;
   }
-  .icon-badge {
-    @apply w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center shrink-0;
-  }
-  .icon-badge-sm {
-    @apply w-8 h-8 rounded-lg bg-accent/15 flex items-center justify-center shrink-0;
-  }
-  /* glowing focus ring for wrapping containers (apply to the outer div) */
+
+  .icon-badge    { @apply w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center shrink-0; }
+  .icon-badge-sm { @apply w-8  h-8  rounded-lg bg-accent/15 flex items-center justify-center shrink-0; }
+
   .glow-input:focus-within {
     box-shadow:
       0 0 0 1px rgb(var(--accent) / 0.35),
       0 0 24px -6px rgb(var(--accent-glow) / 0.35);
   }
-  /* status indicator dot */
-  .status-active {
-    @apply w-2 h-2 rounded-full bg-emerald-400 shrink-0;
-  }
-  .status-offline {
-    @apply w-2 h-2 rounded-full bg-white/20 shrink-0;
-  }
-  /* gradient accent top border */
+
+  .status-active  { @apply w-2 h-2 rounded-full bg-emerald-400 shrink-0; }
+  .status-offline { @apply w-2 h-2 rounded-full bg-white/20      shrink-0; }
+
   .accent-border-top {
     border-top: 1px solid transparent;
     background-clip: padding-box;
@@ -235,12 +234,21 @@ body {
     border-radius: inherit;
     pointer-events: none;
   }
-  /* view header pattern */
-  .view-header {
-    @apply flex items-center gap-3 mb-8;
-  }
+
+  .view-header { @apply flex items-center gap-3 mb-8; }
+
+  /* ── Typography scale (B.O.B) ── */
+  .t-display { @apply text-3xl font-semibold tracking-tight; }
+  .t-h1      { @apply text-2xl font-semibold tracking-tight; }
+  .t-h2      { @apply text-xl  font-semibold tracking-tight; }
+  .t-body    { font-size: 15px; line-height: 1.55; }
+  .t-meta    { font-size: 10px; @apply uppercase tracking-[0.12em] text-ink-mute font-semibold; }
+  .t-mono    { font-family: var(--font-mono), ui-monospace, monospace; }
 }
 
+/* ────────────────────────────────────────────────────────────────────────────
+   Animation primitives
+   ──────────────────────────────────────────────────────────────────────────── */
 .dot-pulse {
   background: currentColor;
   border-radius: 999px;
@@ -256,15 +264,37 @@ body {
   );
 }
 
+/* ── B.O.B keyframes (replaces local ncv2-* in legacy components) ── */
+@keyframes bob-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes bob-spin-reverse {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+@keyframes bob-soft-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.18); }
+}
+@keyframes bob-breathe {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.04); }
+}
+
+/* ── Reduced motion ── */
 @media (prefers-reduced-motion: reduce) {
   .neural-glow,
   .animate-spin-slow,
   .animate-spin-slow-reverse,
-  .animate-glow-pulse {
+  .animate-glow-pulse,
+  .dot-pulse {
     animation: none !important;
   }
-  html,
-  body {
-    transition: none;
+  [style*="bob-spin"],
+  [style*="bob-soft-pulse"],
+  [style*="bob-breathe"] {
+    animation: none !important;
   }
+  html, body { transition: none; }
 }

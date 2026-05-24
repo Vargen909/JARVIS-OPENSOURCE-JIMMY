@@ -92,7 +92,7 @@ export function ChatInput({
               }
             }}
             rows={1}
-            placeholder="Message Jarvis…"
+            placeholder="Message B.O.B…"
             className="flex-1 resize-none bg-transparent outline-none px-2 py-2 text-[15px] placeholder:text-ink-mute"
           />
           <button

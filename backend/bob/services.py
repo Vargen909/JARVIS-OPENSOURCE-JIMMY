@@ -62,11 +62,11 @@ def build_system_prompt(
     engine_id: str | None = None,
     model: str | None = None,
 ) -> str:
-    # Small local models can time out if we send the full Jarvis operating
+    # Small local models can time out if we send the full B.O.B operating
     # contract every request. Keep Ollama prompts compact and practical.
     if (engine_id or "").lower() == "ollama":
         base = (
-            f"You are {assistant_name()}, Jimmy's local personal AI assistant. "
+            f"You are {assistant_name()}, the user's local personal AI assistant. "
             "Answer in the user's language. Be concise, helpful, honest, and practical. "
             "If you are unsure, say so and offer a next step."
         )
@@ -78,7 +78,13 @@ def build_system_prompt(
             ),
         ]
     else:
-        base = system_prompt().replace("Jarvis", assistant_name())
+        # Substitute both new and legacy brand placeholders to whatever the
+        # user has configured as the assistant name in YAML.
+        base = (
+            system_prompt()
+            .replace("B.O.B", assistant_name())
+            .replace("Jarvis", assistant_name())
+        )
         parts = [base, model_rule_prompt(engine_id, model)]
 
     parts.append(f"\n\nActive user profile: name={user.name}, role={user.role.value}, language={user.language}.")

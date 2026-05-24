@@ -83,7 +83,7 @@ export function OperatingModesRail({
           {!isCompact && (
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold truncate">{activeUser.name}</p>
-              <p className="text-[11px] text-ink-mute truncate">Jarvis OS</p>
+              <p className="text-[11px] text-ink-mute truncate">B.O.B OS</p>
             </div>
           )}
         </div>

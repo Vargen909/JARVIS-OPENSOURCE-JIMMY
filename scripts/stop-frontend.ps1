@@ -2,12 +2,14 @@ param(
     [int]$Port = 3000
 )
 
-# Stops any process listening on the Jarvis frontend port.
+# Stops any process listening on the B.O.B frontend port.
 # Idempotent — safe to run if nothing is listening.
 
 $ErrorActionPreference = "SilentlyContinue"
 
-if ($env:JARVIS_FRONTEND_PORT) {
+if ($env:BOB_FRONTEND_PORT) {
+    $Port = [int]$env:BOB_FRONTEND_PORT
+} elseif ($env:JARVIS_FRONTEND_PORT) {
     $Port = [int]$env:JARVIS_FRONTEND_PORT
 }
 

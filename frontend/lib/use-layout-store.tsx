@@ -123,6 +123,11 @@ function reducer(state: LayoutState, action: Action): LayoutState {
 }
 
 function storageKey(userId: number | null | undefined): string {
+  return userId ? `bob.layout.user:${userId}` : "bob.layout.guest";
+}
+
+/** Returns the legacy storage key (pre-rename) so migrations can read it. */
+function legacyStorageKey(userId: number | null | undefined): string {
   return userId ? `jarvis.layout.user:${userId}` : "jarvis.layout.guest";
 }
 
@@ -135,9 +140,21 @@ function applyDom(state: LayoutState) {
   root.style.setProperty("--brain-scale", String(brainScale(state.brainSize)));
 }
 
-function loadFromStorage(key: string): LayoutState | null {
+function loadFromStorage(
+  key: string,
+  legacyKey?: string
+): LayoutState | null {
   try {
-    const raw = localStorage.getItem(key);
+    let raw = localStorage.getItem(key);
+    if (!raw && legacyKey) {
+      // Migrate legacy jarvis.* key → bob.* key
+      const legacyRaw = localStorage.getItem(legacyKey);
+      if (legacyRaw) {
+        localStorage.setItem(key, legacyRaw);
+        localStorage.removeItem(legacyKey);
+        raw = legacyRaw;
+      }
+    }
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<LayoutState>;
     if (!parsed.layoutId || !parsed.paletteId) return null;
@@ -181,7 +198,8 @@ export function LayoutProvider({
 
   useEffect(() => {
     const key = storageKey(userId);
-    const saved = loadFromStorage(key);
+    const legacy = legacyStorageKey(userId);
+    const saved = loadFromStorage(key, legacy);
     const next = saved ?? DEFAULT_STATE;
     dispatch({ type: "HYDRATE", payload: next });
     snapshotRef.current = next;

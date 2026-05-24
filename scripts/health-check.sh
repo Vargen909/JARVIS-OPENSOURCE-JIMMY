@@ -1,29 +1,29 @@
 #!/usr/bin/env bash
-# Probes the Jarvis backend. Exit 0 on success, 1 on any failure.
+# Probes the B.O.B backend. Exit 0 on success, 1 on any failure.
 set -u
 
-PORT="${JARVIS_PORT:-8765}"
+PORT="${BOB_PORT:-${JARVIS_PORT:-8765}}"
 BASE="http://127.0.0.1:${PORT}"
-TIMEOUT="${JARVIS_HEALTH_TIMEOUT:-5}"
+TIMEOUT="${BOB_HEALTH_TIMEOUT:-${JARVIS_HEALTH_TIMEOUT:-5}}"
 
 probe() {
   local path="$1" label="$2"
   local code body
-  body="$(curl -sS --max-time "$TIMEOUT" -o /tmp/jarvis_health_body -w '%{http_code}' "${BASE}${path}" 2>/dev/null)" || code="ERR"
+  body="$(curl -sS --max-time "$TIMEOUT" -o /tmp/bob_health_body -w '%{http_code}' "${BASE}${path}" 2>/dev/null)" || code="ERR"
   code="${body}"
   if [ "$code" -ge 200 ] 2>/dev/null && [ "$code" -lt 400 ]; then
     printf "  [OK ] %-16s %s\n" "$label" "$code"
     return 0
   fi
   printf "  [FAIL] %-16s %s\n" "$label" "${code:-ERR}"
-  if [ -s /tmp/jarvis_health_body ]; then
-    head -c 200 /tmp/jarvis_health_body
+  if [ -s /tmp/bob_health_body ]; then
+    head -c 200 /tmp/bob_health_body
     echo
   fi
   return 1
 }
 
-echo "Jarvis health check -> ${BASE}"
+echo "B.O.B health check -> ${BASE}"
 echo
 
 failed=0

@@ -79,8 +79,8 @@ export function Sidebar({
         </div>
         {!compact && (
           <div className="leading-tight">
-            <div className="font-semibold text-[15px]">Jarvis</div>
-            <div className="text-[11px] text-ink-mute">AI Operating System</div>
+            <div className="font-semibold text-[15px]">B.O.B</div>
+            <div className="text-[11px] text-ink-mute">Neural Operating System</div>
           </div>
         )}
       </motion.div>

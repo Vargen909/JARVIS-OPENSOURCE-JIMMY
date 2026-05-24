@@ -3,13 +3,17 @@ param(
     [int]$TimeoutSec = 5
 )
 
-# Probes the Jarvis backend and prints a tidy status table.
+# Probes the B.O.B backend and prints a tidy status table.
 # Exit code: 0 on success (root + /info + /safety/config + /engines all OK),
 #            1 on any failure. Designed for CI and future installer self-checks.
 
 $ErrorActionPreference = "Continue"
 
-if ($env:JARVIS_PORT) { $Port = [int]$env:JARVIS_PORT }
+if ($env:BOB_PORT) {
+    $Port = [int]$env:BOB_PORT
+} elseif ($env:JARVIS_PORT) {
+    $Port = [int]$env:JARVIS_PORT
+}
 $base = "http://127.0.0.1:$Port"
 
 function Probe {
@@ -30,7 +34,7 @@ function Probe {
     }
 }
 
-Write-Host "Jarvis health check -> $base" -ForegroundColor Cyan
+Write-Host "B.O.B health check -> $base" -ForegroundColor Cyan
 Write-Host ""
 
 $checks = @(

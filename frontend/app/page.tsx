@@ -2,10 +2,11 @@
 
 import { useEffect } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, AlertTriangle, RefreshCw } from "lucide-react";
+import { AlertTriangle, RefreshCw } from "lucide-react";
 import { useJarvis } from "@/components/providers";
 import { Onboarding } from "@/components/onboarding";
 import { AppShell } from "@/components/app-shell";
+import { BobCore } from "@/components/bob/bob-core";
 
 export default function Home() {
   const { loading, info, users, refresh } = useJarvis();
@@ -20,8 +21,7 @@ export default function Home() {
   // ── Loading ──────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-6">
-        {/* Ambient glow */}
+      <div className="min-h-screen flex flex-col items-center justify-center gap-8">
         <div
           aria-hidden
           className="fixed inset-0 pointer-events-none"
@@ -31,37 +31,15 @@ export default function Home() {
           }}
         />
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
+          initial={{ opacity: 0, scale: 0.92 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-          className="relative z-10 flex flex-col items-center gap-5"
+          transition={{ duration: 0.6 }}
+          className="relative z-10 flex flex-col items-center gap-6"
         >
-          <div className="relative">
-            <div className="w-16 h-16 rounded-2xl bg-accent/15 flex items-center justify-center">
-              <Sparkles className="w-7 h-7 text-accent" />
-            </div>
-            {/* Pulsing ring */}
-            <motion.div
-              className="absolute -inset-2 rounded-3xl border border-accent/30"
-              animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.2, 0.5] }}
-              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            />
-          </div>
-
+          <BobCore variant="cinematic" size={200} state="processing" label="B.O.B" />
           <div className="text-center">
-            <h1 className="text-xl font-semibold">Jarvis</h1>
+            <h1 className="t-h2">B.O.B</h1>
             <p className="text-sm text-ink-dim mt-1">Starting up…</p>
-          </div>
-
-          {/* Thinking dots */}
-          <div className="flex items-center gap-1.5">
-            {[0, 1, 2].map((i) => (
-              <span
-                key={i}
-                className="dot-pulse text-accent"
-                style={{ animationDelay: `${i * 0.2}s` }}
-              />
-            ))}
           </div>
         </motion.div>
       </div>
@@ -81,7 +59,7 @@ export default function Home() {
             <AlertTriangle className="w-6 h-6 text-amber-400" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold">Can&apos;t reach Jarvis</h1>
+            <h1 className="t-h2">Can&apos;t reach B.O.B</h1>
             <p className="text-ink-dim text-sm mt-2 leading-relaxed">
               Make sure the backend is running at{" "}
               <code className="text-accent font-mono text-xs">
@@ -115,6 +93,5 @@ export default function Home() {
     return <Onboarding />;
   }
 
-  // ── Main app ──────────────────────────────────────────────────────────────
   return <AppShell />;
 }

@@ -1,8 +1,11 @@
-"""Safety configuration for the Jarvis agent guardrails.
+"""Safety configuration for the B.O.B agent guardrails.
 
 Values are read from environment variables with conservative defaults.
 A future settings UI can read this via the /safety/config endpoint and
 write env values; the dataclass itself stays immutable per request.
+
+Each var has a JARVIS_* legacy fallback so existing .env files keep
+working after the rebrand.
 """
 
 from __future__ import annotations
@@ -11,8 +14,15 @@ import os
 from dataclasses import dataclass
 
 
-def _int(name: str, default: int) -> int:
-    raw = os.environ.get(name)
+def _read_env(new_key: str, legacy_key: str) -> str | None:
+    val = os.environ.get(new_key)
+    if val:
+        return val
+    return os.environ.get(legacy_key)
+
+
+def _int(new_key: str, legacy_key: str, default: int) -> int:
+    raw = _read_env(new_key, legacy_key)
     if not raw:
         return default
     try:
@@ -22,8 +32,8 @@ def _int(name: str, default: int) -> int:
         return default
 
 
-def _float(name: str, default: float) -> float:
-    raw = os.environ.get(name)
+def _float(new_key: str, legacy_key: str, default: float) -> float:
+    raw = _read_env(new_key, legacy_key)
     if not raw:
         return default
     try:
@@ -56,9 +66,17 @@ class SafetyConfig:
 def load_safety_config() -> SafetyConfig:
     """Build a SafetyConfig from environment variables."""
     return SafetyConfig(
-        max_agent_loops=_int("JARVIS_MAX_AGENT_LOOPS", 10),
-        max_tool_calls=_int("JARVIS_MAX_TOOL_CALLS", 25),
-        max_runtime_seconds=_float("JARVIS_MAX_AGENT_RUNTIME_SECONDS", 120.0),
-        max_identical_errors=_int("JARVIS_MAX_IDENTICAL_ERRORS", 3),
-        max_identical_plans=_int("JARVIS_MAX_IDENTICAL_PLANS", 3),
+        max_agent_loops=_int("BOB_MAX_AGENT_LOOPS", "JARVIS_MAX_AGENT_LOOPS", 10),
+        max_tool_calls=_int("BOB_MAX_TOOL_CALLS", "JARVIS_MAX_TOOL_CALLS", 25),
+        max_runtime_seconds=_float(
+            "BOB_MAX_AGENT_RUNTIME_SECONDS",
+            "JARVIS_MAX_AGENT_RUNTIME_SECONDS",
+            120.0,
+        ),
+        max_identical_errors=_int(
+            "BOB_MAX_IDENTICAL_ERRORS", "JARVIS_MAX_IDENTICAL_ERRORS", 3
+        ),
+        max_identical_plans=_int(
+            "BOB_MAX_IDENTICAL_PLANS", "JARVIS_MAX_IDENTICAL_PLANS", 3
+        ),
     )

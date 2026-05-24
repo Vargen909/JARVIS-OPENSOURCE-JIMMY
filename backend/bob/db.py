@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from .config import DATA_DIR
 
-DB_PATH = DATA_DIR / "jarvis.sqlite"
+DB_PATH = DATA_DIR / "bob.sqlite"
 ENGINE = create_engine(
     f"sqlite:///{DB_PATH}",
     connect_args={"check_same_thread": False},

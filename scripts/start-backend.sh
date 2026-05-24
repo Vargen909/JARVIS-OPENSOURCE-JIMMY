@@ -13,4 +13,4 @@ python -m pip install --upgrade pip >/dev/null
 pip install -r backend/requirements.txt
 
 export PYTHONPATH="$ROOT/backend"
-python -m jarvis.main
+python -m bob.main

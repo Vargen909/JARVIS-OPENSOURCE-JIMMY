@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Brain, Plus, Trash2, Sparkles, Lock } from "lucide-react";
+import { Plus, Trash2, Sparkles, Lock, Brain } from "lucide-react";
+import { BobCore } from "@/components/bob/bob-core";
 import { useJarvis } from "@/components/providers";
 import { api } from "@/lib/api";
 import type { MemoryOut } from "@/lib/types";
@@ -62,13 +63,11 @@ export function MemoryView() {
           animate={{ opacity: 1, y: 0 }}
           className="view-header"
         >
-          <div className="icon-badge">
-            <Brain className="w-5 h-5 text-accent" />
-          </div>
+          <BobCore variant="compact" size={44} className="shrink-0" />
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">AI Memory</h1>
+            <h1 className="t-h1">AI Memory</h1>
             <p className="text-sm text-ink-dim mt-0.5">
-              What Jarvis knows and remembers about you
+              What B.O.B knows and remembers about you
             </p>
           </div>
         </motion.div>
@@ -141,7 +140,7 @@ export function MemoryView() {
               <Brain className="w-10 h-10 text-ink-mute mx-auto mb-3 opacity-40" />
               <p className="text-sm text-ink-dim font-medium">No memory notes yet.</p>
               <p className="text-xs text-ink-mute mt-1">
-                Add something above to help Jarvis understand you better.
+                Add something above to help B.O.B understand you better.
               </p>
             </motion.div>
           )}

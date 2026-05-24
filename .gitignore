@@ -1,11 +1,13 @@
 # Secrets & local state
 .env
+.bob_key
 .jarvis_key
 backend/data/
 
 # Logs
 *.log
 *.log.err
+bob.err.log
 jarvis.err.log
 frontend-build.log
 

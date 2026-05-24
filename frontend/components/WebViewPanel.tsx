@@ -10,7 +10,7 @@ export function WebViewPanel({
   onClose: () => void;
 }) {
   return (
-    <section className="fixed inset-4 z-40 panel-strong overflow-hidden flex flex-col">
+    <section className="fixed inset-4 z-[var(--z-webview)] panel-strong overflow-hidden flex flex-col">
       <div className="flex items-center gap-3 border-b border-white/[0.06] px-4 py-3">
         <div className="input flex-1 truncate text-ink-dim">{url}</div>
         <button
@@ -27,7 +27,7 @@ export function WebViewPanel({
         src={url}
         sandbox="allow-scripts allow-same-origin"
         className="h-full w-full flex-1 bg-white"
-        title="Jarvis WebView"
+        title="B.O.B WebView"
       />
     </section>
   );

@@ -1,7 +1,7 @@
 """Structured, secret-aware safety logging.
 
 Every safety event is logged via the standard logging module under the
-``jarvis.safety`` logger. Secrets and obvious credentials are redacted
+``bob.safety`` logger. Secrets and obvious credentials are redacted
 before they are written so logs are safe to ship to disk or aggregators.
 """
 
@@ -12,7 +12,7 @@ import logging
 import re
 from typing import Any
 
-logger = logging.getLogger("jarvis.safety")
+logger = logging.getLogger("bob.safety")
 if not logger.handlers:
     handler = logging.StreamHandler()
     handler.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s"))

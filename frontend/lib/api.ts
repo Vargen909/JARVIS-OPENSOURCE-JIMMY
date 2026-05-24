@@ -30,7 +30,7 @@ async function request<T>(
     });
   } catch {
     throw new Error(
-      `Cannot reach Jarvis backend at ${BASE}. Start it with: .\\scripts\\start-backend.ps1`
+      `Cannot reach B.O.B backend at ${BASE}. Start it with: .\\scripts\\start-backend.ps1`
     );
   }
   if (!res.ok) {

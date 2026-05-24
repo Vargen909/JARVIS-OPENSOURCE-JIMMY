@@ -2,7 +2,7 @@
   "name": "Clock",
   "version": "0.1.0",
   "description": "Example plugin. Demonstrates the manifest format.",
-  "author": "Jarvis",
+  "author": "B.O.B",
   "permissions": [],
   "entry": "main.py"
 }

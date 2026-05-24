@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Stops any process listening on the Jarvis frontend port. Idempotent.
+# Stops any process listening on the B.O.B frontend port. Idempotent.
 set -u
 
-PORT="${JARVIS_FRONTEND_PORT:-3000}"
+PORT="${BOB_FRONTEND_PORT:-${JARVIS_FRONTEND_PORT:-3000}}"
 
 pids=""
 if command -v lsof >/dev/null 2>&1; then

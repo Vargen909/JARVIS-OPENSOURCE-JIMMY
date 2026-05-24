@@ -170,7 +170,7 @@ export function CommandBar({ onSend, isThinking }: CommandBarProps) {
             value={message}
             onChange={handleChange}
             onKeyDown={handleKeyDown}
-            placeholder="Ask Jarvis anything…"
+            placeholder="Ask B.O.B anything…"
             disabled={isThinking}
             rows={1}
             className="flex-1 resize-none bg-transparent outline-none px-1 py-2 text-[15px] text-ink placeholder:text-ink-mute min-h-[40px] max-h-[150px]"

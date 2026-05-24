@@ -51,7 +51,7 @@ export function MemoryDrawer({
   return (
     <Modal open={open} onClose={onClose} title="Memory">
       <p className="text-sm text-ink-dim mb-4">
-        Anything you teach Jarvis is stored locally and encrypted. Reference
+        Anything you teach B.O.B is stored locally and encrypted. Reference
         will be added to every conversation automatically.
       </p>
       <div className="flex gap-2 mb-4">

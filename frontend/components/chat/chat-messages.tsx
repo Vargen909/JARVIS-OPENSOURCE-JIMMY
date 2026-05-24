@@ -3,7 +3,8 @@
 import { Sparkles } from "lucide-react";
 import { useJarvis } from "../providers";
 import { useLayout } from "@/lib/use-layout-store";
-import { NeuralCore } from "../neural-core";
+import { BobCore } from "../bob/bob-core";
+import { resolveBobSize } from "../bob/use-bob-motion";
 import type { MessageOut } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -39,7 +40,12 @@ export function ChatMessages({
       >
         {showNeural ? (
           <div className="mb-6">
-            <NeuralCore size={state.brainSize} thinking={pending} />
+            <BobCore
+              variant="minimal"
+              size={Math.min(resolveBobSize(state.brainSize), 260)}
+              isThinking={pending}
+              label=""
+            />
           </div>
         ) : (
           <div className="icon-badge mx-auto mb-5 w-14 h-14 rounded-2xl">
@@ -49,8 +55,7 @@ export function ChatMessages({
 
         <h1
           className={cn(
-            "font-semibold tracking-tight",
-            state.density === "compact" ? "text-2xl" : "text-3xl"
+            state.density === "compact" ? "t-h1" : "t-display"
           )}
         >
           Hur kan jag hjälpa dig idag?
