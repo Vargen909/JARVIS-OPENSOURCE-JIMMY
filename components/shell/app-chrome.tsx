@@ -66,17 +66,18 @@ export function AppChrome({
 
       {/* ── Top header ── */}
       <header
-        className="relative z-[var(--z-chrome)] shrink-0 flex items-center justify-between gap-3 px-4 sm:px-6 border-b border-white/[0.04] bg-bg/55 backdrop-blur-xl"
+        className="relative z-[var(--z-chrome)] shrink-0 flex items-center justify-between gap-3 px-5 sm:px-7 border-b border-white/[0.035] bg-bg/70 backdrop-blur-2xl"
         style={{ height: "var(--bob-nav-h)" }}
       >
         <motion.div
-          initial={{ opacity: 0, x: -12 }}
+          initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           className="flex items-center gap-2.5 shrink-0"
         >
-          <BobCore variant="compact" size={28} className="shrink-0" />
-          <span className="font-semibold text-[15px] tracking-tight">B.O.B</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20 font-mono">
+          <BobCore variant="compact" size={26} className="shrink-0" />
+          <span className="font-semibold text-[14px] tracking-wide text-ink">B.O.B</span>
+          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-accent/8 text-accent/70 border border-accent/15 font-mono tracking-widest">
             OS
           </span>
         </motion.div>
@@ -90,13 +91,14 @@ export function AppChrome({
         </div>
 
         <motion.div
-          initial={{ opacity: 0, x: 12 }}
+          initial={{ opacity: 0, x: 10 }}
           animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           className="flex items-center gap-2 shrink-0"
         >
           <button
             type="button"
-            className="btn-ghost py-1.5 px-3 text-xs"
+            className="btn-ghost py-1.5 px-3 text-xs gap-1.5 text-ink-mute hover:text-ink"
             onClick={onOpenCustomize}
             title="Customize"
           >

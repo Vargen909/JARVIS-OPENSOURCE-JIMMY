@@ -6,21 +6,21 @@
    B.O.B Design System — global tokens
    ──────────────────────────────────────────────────────────────────────────── */
 
-/* Default palette: Neural Blue */
+/* Default palette: Neural Blue — deep black + neural cyan-blue */
 :root,
 [data-palette="neural-blue"] {
   color-scheme: dark;
-  --bg: 11 13 18;
-  --bg-soft: 17 20 27;
-  --bg-card: 22 26 35;
-  --ink: 231 235 242;
-  --ink-dim: 154 163 178;
-  --ink-mute: 107 116 132;
-  --accent: 124 156 255;
-  --accent-soft: 90 120 255;
-  --accent-glow: 156 180 255;
-  --border: 34 39 52;
-  --ring: 124 156 255;
+  --bg: 7 8 12;
+  --bg-soft: 12 14 20;
+  --bg-card: 16 19 28;
+  --ink: 225 230 242;
+  --ink-dim: 140 152 172;
+  --ink-mute: 82 92 112;
+  --accent: 100 160 255;
+  --accent-soft: 74 130 240;
+  --accent-glow: 140 185 255;
+  --border: 26 30 44;
+  --ring: 100 160 255;
 }
 
 [data-palette="violet"] {
@@ -160,8 +160,8 @@ body {
     background-color 0.35s ease,
     color 0.25s ease;
   background-image:
-    radial-gradient(1200px 600px at 50% -10%, rgb(var(--accent-glow) / 0.18), transparent 60%),
-    radial-gradient(900px 500px at 100% 100%, rgb(var(--accent) / 0.06), transparent 60%);
+    radial-gradient(1400px 700px at 50% -5%, rgb(var(--accent-glow) / 0.10), transparent 55%),
+    radial-gradient(600px 400px at 80% 100%, rgb(var(--accent) / 0.04), transparent 60%);
   background-attachment: fixed;
 }
 

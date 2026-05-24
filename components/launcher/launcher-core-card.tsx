@@ -9,53 +9,59 @@ interface LauncherCoreCardProps {
 }
 
 /**
- * Special B.O.B identity card.
- *
- * Uses the live BobCore orb instead of a static icon, giving the launcher's
- * "home" button a uniquely animated, premium AI-core feeling that stands apart
- * from the rest of the grid.
+ * Special B.O.B identity card — the premium orb centerpiece of the launcher.
+ * Uses the live BobCore orb, deeper glow, and elevated visual weight to
+ * feel like the heart of the OS.
  */
 export function LauncherCoreCard({ onClick }: LauncherCoreCardProps) {
   return (
     <motion.button
       type="button"
       onClick={onClick}
-      whileHover={{ y: -4, scale: 1.03 }}
+      whileHover={{ y: -3, scale: 1.025 }}
       whileTap={{ scale: 0.97 }}
-      transition={{ duration: 0.2, ease: "easeOut" }}
+      transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
       aria-label="B.O.B – Neural AI Core"
       className={cn(
-        "group relative flex flex-col items-center justify-center gap-3",
+        "group relative flex flex-col items-center justify-center gap-2.5 pt-4 pb-4",
         "aspect-square w-full rounded-2xl",
-        // Slightly more intense background to distinguish from plain cards
-        "bg-gradient-to-b from-bg-card/60 to-bg-card/30 backdrop-blur-xl",
-        "border border-accent/20",
-        "shadow-glow",
-        "transition-all duration-200",
-        "hover:border-accent/40 hover:shadow-[0_0_32px_-8px_rgb(var(--accent-glow)/0.35)]",
+        "bg-bg-card/50 backdrop-blur-xl",
+        "border border-accent/15",
+        "transition-all duration-250",
+        "hover:border-accent/35",
         "cursor-pointer",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
+        "focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/50 focus-visible:ring-offset-1 focus-visible:ring-offset-bg",
         "overflow-hidden",
       )}
     >
-      {/* Ambient neural glow in background */}
+      {/* Cinematic depth glow */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-30 group-hover:opacity-50 transition-opacity duration-500"
+        className="absolute inset-0 pointer-events-none transition-opacity duration-500 opacity-60 group-hover:opacity-100"
         style={{
           background:
-            "radial-gradient(circle at 50% 42%, rgb(var(--accent-glow) / 0.28) 0%, transparent 65%)",
+            "radial-gradient(ellipse 90% 80% at 50% 30%, rgb(var(--accent-glow) / 0.18) 0%, transparent 70%)",
         }}
         aria-hidden
       />
 
-      {/* Live orb — minimal variant keeps particles light, rings active */}
+      {/* Bottom glow edge */}
+      <div
+        className="absolute bottom-0 left-1/2 -translate-x-1/2 w-3/4 h-px pointer-events-none opacity-40 group-hover:opacity-80 transition-opacity duration-400"
+        style={{
+          background:
+            "linear-gradient(90deg, transparent, rgb(var(--accent-glow) / 0.7), transparent)",
+        }}
+        aria-hidden
+      />
+
+      {/* Live orb */}
       <div className="relative z-10 flex-shrink-0">
         <BobCore
           variant="minimal"
           state="idle"
-          size={80}
+          size={76}
           label=""
-          intensity={0.85}
+          intensity={0.9}
         />
       </div>
 
@@ -63,17 +69,18 @@ export function LauncherCoreCard({ onClick }: LauncherCoreCardProps) {
       <span
         className={cn(
           "relative z-10",
-          "text-[11px] font-medium tracking-[0.22em] uppercase",
-          "text-accent group-hover:text-white",
+          "text-[10px] font-semibold tracking-[0.25em] uppercase",
+          "text-accent/80 group-hover:text-accent",
           "transition-colors duration-200",
         )}
       >
         B.O.B
       </span>
 
-      {/* Accent line — uses global accent colour */}
+      {/* Subtle accent line */}
       <div
-        className="relative z-10 w-8 h-px bg-accent opacity-60 group-hover:opacity-100 transition-opacity duration-200"
+        className="relative z-10 w-6 h-px opacity-40 group-hover:opacity-70 transition-all duration-300 group-hover:w-10"
+        style={{ background: "rgb(var(--accent-glow))" }}
         aria-hidden
       />
     </motion.button>

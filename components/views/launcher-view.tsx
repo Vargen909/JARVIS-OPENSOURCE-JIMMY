@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { LAUNCHER_ITEMS, type LauncherAction } from "@/lib/launcher-items";
 import { LauncherCard } from "@/components/launcher/launcher-card";
 import { LauncherCoreCard } from "@/components/launcher/launcher-core-card";
@@ -15,13 +15,6 @@ interface LauncherViewProps {
   onOpenWebView: (url: string) => void;
 }
 
-/**
- * B.O.B OS Workspace / Launcher.
- *
- * The landing screen: a 28-card OS-style grid with per-card accent colours,
- * a special animated B.O.B Core card, and "Coming soon" toasts for
- * placeholder items. All routing is delegated to AppShell callbacks.
- */
 export function LauncherView({
   onViewChange,
   onOpenSettings,
@@ -64,59 +57,77 @@ export function LauncherView({
 
   return (
     <div className="relative flex flex-col h-full w-full min-h-0 overflow-y-auto">
-      {/* Ambient background glow */}
+      {/* Deep ambient background */}
       <div
         className="pointer-events-none fixed inset-0 z-0"
+        aria-hidden
         style={{
           background:
-            "radial-gradient(ellipse 80% 60% at 50% 0%, rgb(var(--accent-glow) / 0.06) 0%, transparent 70%)",
+            "radial-gradient(ellipse 70% 50% at 50% -10%, rgb(var(--accent-glow) / 0.08) 0%, transparent 65%)",
         }}
-        aria-hidden
       />
 
-      <div className="relative z-10 flex-1 max-w-[1280px] mx-auto w-full px-6 py-10">
-        {/* Header */}
+      <div className="relative z-10 flex-1 max-w-[1200px] mx-auto w-full px-5 sm:px-8 py-10">
+
+        {/* Header — minimal, typographic */}
         <motion.div
-          initial={{ opacity: 0, y: -12 }}
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease: "easeOut" }}
-          className="mb-8"
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="mb-10 flex items-end justify-between"
         >
-          <h1 className="text-2xl font-light tracking-tight text-ink">
-            Workspace
-          </h1>
-          <p className="mt-1 text-sm text-ink-mute">Välj ett område</p>
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.22em] text-ink-mute font-medium mb-2">
+              B.O.B OS
+            </p>
+            <h1 className="text-[26px] font-light tracking-tight text-ink leading-none">
+              Workspace
+            </h1>
+          </div>
+          <p className="text-xs text-ink-mute pb-0.5 hidden sm:block">
+            Välj ett område att arbeta i
+          </p>
         </motion.div>
 
         {/* Launcher grid */}
         <motion.div
-          initial={{ opacity: 0, y: 16 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.08, ease: "easeOut" }}
-          className="grid gap-3 sm:gap-4"
+          transition={{ duration: 0.55, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+          className="grid gap-3"
           style={{
-            gridTemplateColumns:
-              "repeat(auto-fill, minmax(min(100%, 130px), 1fr))",
+            gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 124px), 1fr))",
           }}
         >
-          {LAUNCHER_ITEMS.map((item) =>
+          {LAUNCHER_ITEMS.map((item, i) =>
             item.variant === "core" ? (
-              <LauncherCoreCard
+              <motion.div
                 key={item.id}
-                onClick={() => handleAction(item.action, item.label)}
-              />
+                initial={{ opacity: 0, scale: 0.92 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: i * 0.018, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <LauncherCoreCard
+                  onClick={() => handleAction(item.action, item.label)}
+                />
+              </motion.div>
             ) : (
-              <LauncherCard
+              <motion.div
                 key={item.id}
-                item={item}
-                onClick={() => handleAction(item.action, item.label)}
-              />
+                initial={{ opacity: 0, scale: 0.94 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.35, delay: i * 0.018, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <LauncherCard
+                  item={item}
+                  onClick={() => handleAction(item.action, item.label)}
+                />
+              </motion.div>
             )
           )}
         </motion.div>
       </div>
 
-      {/* "Coming soon" toast — fixed overlay, no extra libs */}
       <LauncherToast visible={toastVisible} label={toastLabel} />
     </div>
   );

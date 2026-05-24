@@ -54,10 +54,11 @@ export function ViewNavigation({ activeView, onViewChange, compact }: ViewNaviga
   const items = compact ? VIEWS.slice(0, 6) : VIEWS;
   return (
     <motion.nav
-      initial={{ opacity: 0, y: -8 }}
+      initial={{ opacity: 0, y: -6 }}
       animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
-        "flex gap-1 p-1.5 rounded-2xl border border-white/[0.06] bg-bg-card/60 backdrop-blur-xl",
+        "flex gap-0.5 p-1 rounded-2xl border border-white/[0.05] bg-bg-soft/70 backdrop-blur-2xl",
         compact && "p-1 rounded-full"
       )}
     >
@@ -69,31 +70,31 @@ export function ViewNavigation({ activeView, onViewChange, compact }: ViewNaviga
             key={view.id}
             type="button"
             onClick={() => onViewChange(view.id)}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
             title={view.label}
             className={cn(
-              "relative flex items-center gap-2 px-3 py-2 rounded-xl transition-colors",
-              compact && "w-10 h-10 justify-center px-0 py-0 rounded-full",
+              "relative flex items-center gap-1.5 px-3 py-2 rounded-xl transition-colors duration-150",
+              compact && "w-9 h-9 justify-center px-0 py-0 rounded-full",
               isActive
-                ? "text-accent"
-                : "text-ink-mute hover:text-ink"
+                ? "text-ink"
+                : "text-ink-mute hover:text-ink-dim"
             )}
           >
             {isActive && (
               <motion.div
                 layoutId={compact ? "activeViewBgCompact" : "activeViewBg"}
                 className={cn(
-                  "absolute inset-0 bg-accent/15 border border-accent/30",
+                  "absolute inset-0 bg-white/[0.07] border border-white/[0.08]",
                   compact ? "rounded-full" : "rounded-xl"
                 )}
                 initial={false}
-                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+                transition={{ type: "spring", stiffness: 500, damping: 35 }}
               />
             )}
-            <Icon className="h-4 w-4 relative z-10" />
+            <Icon className="h-3.5 w-3.5 relative z-10" strokeWidth={isActive ? 2 : 1.5} />
             {!compact && (
-              <span className="text-sm font-medium relative z-10">{view.label}</span>
+              <span className="text-[13px] font-medium relative z-10">{view.label}</span>
             )}
           </motion.button>
         );
