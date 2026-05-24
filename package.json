@@ -1,0 +1,19 @@
+{
+  "name": "jarvis-opensource",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "start": "cd frontend && npm run start",
+    "lint": "cd frontend && npm run lint"
+  },
+  "workspaces": [
+    "frontend"
+  ],
+  "dependencies": {
+    "framer-motion": "^12.40.0",
+    "lucide-react": "^1.16.0",
+    "react": "^19.2.6"
+  }
+}
