@@ -57,55 +57,72 @@ export function LauncherView({
 
   return (
     <div className="relative flex flex-col h-full w-full min-h-0 overflow-y-auto">
-      {/* Deep ambient background */}
+      {/* Ambient radial top glow */}
       <div
         className="pointer-events-none fixed inset-0 z-0"
         aria-hidden
         style={{
           background:
-            "radial-gradient(ellipse 70% 50% at 50% -10%, rgb(var(--accent-glow) / 0.08) 0%, transparent 65%)",
+            "radial-gradient(ellipse 60% 40% at 50% -5%, rgb(var(--accent-glow) / 0.07) 0%, transparent 60%)",
         }}
       />
 
-      <div className="relative z-10 flex-1 max-w-[1200px] mx-auto w-full px-5 sm:px-8 py-10">
+      <div className="relative z-10 flex-1 max-w-[1160px] mx-auto w-full px-5 sm:px-8 pt-8 pb-12">
 
-        {/* Header — minimal, typographic */}
+        {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: -10 }}
+          initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="mb-10 flex items-end justify-between"
+          className="mb-8 flex items-end justify-between"
         >
           <div>
-            <p className="text-[10px] uppercase tracking-[0.22em] text-ink-mute font-medium mb-2">
+            <p className="text-[9px] uppercase tracking-[0.28em] text-ink-mute/60 font-medium mb-1.5">
               B.O.B OS
             </p>
-            <h1 className="text-[26px] font-light tracking-tight text-ink leading-none">
+            <h1 className="text-[22px] font-light tracking-[-0.01em] text-ink leading-none">
               Workspace
             </h1>
           </div>
-          <p className="text-xs text-ink-mute pb-0.5 hidden sm:block">
+          <p className="text-[11px] text-ink-mute/50 pb-0.5 hidden sm:block tracking-wide">
             Välj ett område att arbeta i
           </p>
         </motion.div>
 
-        {/* Launcher grid */}
+        {/* Divider */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-          className="grid gap-3"
+          initial={{ opacity: 0, scaleX: 0.6 }}
+          animate={{ opacity: 1, scaleX: 1 }}
+          transition={{ duration: 0.5, delay: 0.06, ease: [0.22, 1, 0.36, 1] }}
+          className="mb-8 h-px origin-left"
           style={{
-            gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 124px), 1fr))",
+            background:
+              "linear-gradient(90deg, rgb(var(--accent)/0.18) 0%, rgb(var(--border)) 40%, transparent 80%)",
+          }}
+          aria-hidden
+        />
+
+        {/* Grid */}
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+          className="grid gap-2.5"
+          style={{
+            gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 116px), 1fr))",
           }}
         >
           {LAUNCHER_ITEMS.map((item, i) =>
             item.variant === "core" ? (
               <motion.div
                 key={item.id}
-                initial={{ opacity: 0, scale: 0.92 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4, delay: i * 0.018, ease: [0.22, 1, 0.36, 1] }}
+                initial={{ opacity: 0, scale: 0.9, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{
+                  duration: 0.38,
+                  delay: 0.12 + i * 0.016,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
               >
                 <LauncherCoreCard
                   onClick={() => handleAction(item.action, item.label)}
@@ -114,9 +131,13 @@ export function LauncherView({
             ) : (
               <motion.div
                 key={item.id}
-                initial={{ opacity: 0, scale: 0.94 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.35, delay: i * 0.018, ease: [0.22, 1, 0.36, 1] }}
+                initial={{ opacity: 0, scale: 0.9, y: 8 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{
+                  duration: 0.32,
+                  delay: 0.12 + i * 0.016,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
               >
                 <LauncherCard
                   item={item}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useJarvis } from "@/components/providers";
 import { api } from "@/lib/api";
 import { mapChatError } from "@/lib/chat-errors";
@@ -434,6 +435,8 @@ export function CoreView({
   return (
     <div className="relative h-full w-full flex flex-col items-center min-h-0">
       <CoreFocusOverlay active={focusMode} />
+
+      {/* Status bar */}
       <CoreStatusBar
         now={now}
         modelLabel={modelLabel}
@@ -446,8 +449,13 @@ export function CoreView({
         hidden={statusHidden}
       />
 
-      {/* Orb */}
-      <div className="relative z-10 flex-1 min-h-0 flex flex-col items-center justify-center w-full px-6">
+      {/* Orb — centered, cinematic, pulsed on mount */}
+      <motion.div
+        className="relative z-10 flex-1 min-h-0 flex flex-col items-center justify-center w-full px-6"
+        initial={{ opacity: 0, scale: 0.88 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+      >
         <BobCore
           variant="cinematic"
           size={orbSize}
@@ -456,42 +464,52 @@ export function CoreView({
           isListening={isListening}
           intensity={intensity}
         />
-        <BobSubtitle
-          state={state}
-          subtitle={subtitleText}
-          intensity={intensity}
-          minimal={focusMode}
-        />
-      </div>
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <BobSubtitle
+            state={state}
+            subtitle={subtitleText}
+            intensity={intensity}
+            minimal={focusMode}
+          />
+        </motion.div>
+      </motion.div>
 
-      <CoreInput
-        ref={inputRef}
-        text={text}
-        onTextChange={setText}
-        pending={isPending}
-        listening={speechListening}
-        error={inputError}
-        confirmPrompt={confirmPrompt}
-        onConfirm={() => {
-          void resolvePendingConfirmation("ja");
-        }}
-        onCancel={() => {
-          void resolvePendingConfirmation("nej");
-        }}
-        onSend={() => {
-          const msg = text.trim();
-          if (!msg) return;
-          setText("");
-          if (pendingConfirmAction) {
-            void resolvePendingConfirmation(msg);
-            return;
-          }
-          void runCommand(msg);
-        }}
-        onToggleVoice={toggleVoice}
-        idle={isIdle}
-        hidden={inputHidden}
-      />
+      {/* Command input */}
+      <motion.div
+        className="w-full"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <CoreInput
+          ref={inputRef}
+          text={text}
+          onTextChange={setText}
+          pending={isPending}
+          listening={speechListening}
+          error={inputError}
+          confirmPrompt={confirmPrompt}
+          onConfirm={() => { void resolvePendingConfirmation("ja"); }}
+          onCancel={() => { void resolvePendingConfirmation("nej"); }}
+          onSend={() => {
+            const msg = text.trim();
+            if (!msg) return;
+            setText("");
+            if (pendingConfirmAction) {
+              void resolvePendingConfirmation(msg);
+              return;
+            }
+            void runCommand(msg);
+          }}
+          onToggleVoice={toggleVoice}
+          idle={isIdle}
+          hidden={inputHidden}
+        />
+      </motion.div>
     </div>
   );
 }

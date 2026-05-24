@@ -23,9 +23,9 @@ export interface CoreInputProps {
 }
 
 /**
- * Bottom command input for Core Mode. Auto-fades on idle, expands width
- * subtly when the user starts typing, and is fully removed in Neural
- * Focus Mode (until interaction unmounts the focus overlay).
+ * Premium command bar for Core Mode.
+ * Expands smoothly on focus, soft glow sweep on the send button,
+ * and fades elegantly on idle.
  */
 export const CoreInput = forwardRef<HTMLTextAreaElement, CoreInputProps>(
   function CoreInput(
@@ -46,73 +46,129 @@ export const CoreInput = forwardRef<HTMLTextAreaElement, CoreInputProps>(
     ref
   ) {
     const hasText = text.trim().length > 0;
-    // Idle = visually faded only. Pointer events stay live so the user
-    // can always click the send/mic button — fade is purely cosmetic.
     const fade = idle && !hasText && !listening && !pending;
+
     return (
       <AnimatePresence>
         {!hidden && (
           <motion.div
             key="core-input"
-            initial={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0, y: 28 }}
             animate={{
-              opacity: fade ? 0.35 : 1,
-              y: fade ? 6 : 0,
-              scale: hasText ? 1.015 : 1,
+              opacity: fade ? 0.28 : 1,
+              y: fade ? 8 : 0,
             }}
             whileHover={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 24 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
-            className="relative z-10 w-full max-w-3xl px-6 pb-8 shrink-0 mx-auto"
+            exit={{ opacity: 0, y: 28 }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            className="relative z-10 w-full max-w-2xl px-5 pb-7 shrink-0 mx-auto"
           >
-            {error && (
-              <div className="mb-3 text-center text-sm text-rose-400">
-                {error}
-              </div>
-            )}
-            {confirmPrompt && (
-              <div className="mb-3 rounded-2xl border border-white/[0.08] bg-bg-card/60 px-4 py-3 backdrop-blur">
-                <p className="text-center text-sm text-ink">{confirmPrompt}</p>
-                <div className="mt-3 flex items-center justify-center gap-2">
-                  <button
-                    type="button"
-                    onClick={onConfirm}
-                    className="rounded-xl bg-accent px-3 py-1.5 text-xs font-medium text-white transition hover:bg-accent-soft"
-                  >
-                    Ja
-                  </button>
-                  <button
-                    type="button"
-                    onClick={onCancel}
-                    className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-ink-mute transition hover:text-ink"
-                  >
-                    Avbryt
-                  </button>
-                </div>
-              </div>
-            )}
+            {/* Error message */}
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 4 }}
+                  className="mb-3 text-center text-sm text-rose-400/90"
+                >
+                  {error}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Confirm prompt */}
+            <AnimatePresence>
+              {confirmPrompt && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.97, y: 6 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.97, y: 6 }}
+                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                  className="mb-3 rounded-2xl border border-white/[0.07] bg-bg-card/70 px-5 py-4 backdrop-blur-xl"
+                >
+                  <p className="text-center text-[14px] text-ink leading-relaxed">
+                    {confirmPrompt}
+                  </p>
+                  <div className="mt-3 flex items-center justify-center gap-2.5">
+                    <button
+                      type="button"
+                      onClick={onConfirm}
+                      className={cn(
+                        "rounded-xl px-4 py-1.5 text-[12px] font-semibold tracking-wide",
+                        "bg-accent text-white transition-all duration-150",
+                        "hover:bg-accent-soft hover:shadow-glow active:scale-[0.97]"
+                      )}
+                    >
+                      Ja
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onCancel}
+                      className={cn(
+                        "rounded-xl border border-white/[0.08] bg-white/[0.04] px-4 py-1.5",
+                        "text-[12px] font-medium text-ink-mute",
+                        "transition-all duration-150 hover:text-ink hover:bg-white/[0.07] active:scale-[0.97]"
+                      )}
+                    >
+                      Avbryt
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Main input row */}
             <div className="flex items-end gap-3">
-              <button
+              {/* Mic button */}
+              <motion.button
                 type="button"
                 onClick={onToggleVoice}
-                title="Voice input (F3)"
+                title="Röstinmatning (F3)"
+                whileHover={{ scale: 1.06 }}
+                whileTap={{ scale: 0.94 }}
                 className={cn(
-                  "flex items-center justify-center w-12 h-12 rounded-full border transition-colors shrink-0",
+                  "flex items-center justify-center w-11 h-11 rounded-full border",
+                  "transition-all duration-200 shrink-0",
                   listening
-                    ? "bg-accent/20 border-accent text-accent"
-                    : "bg-bg-card/50 border-white/[0.08] text-ink-mute hover:text-ink hover:border-accent/40"
+                    ? "bg-accent/15 border-accent/60 text-accent shadow-[0_0_16px_-4px_rgb(var(--accent-glow)/0.5)]"
+                    : "bg-bg-card/40 border-white/[0.07] text-ink-mute hover:text-ink-dim hover:border-white/[0.14] hover:bg-bg-card/70"
                 )}
               >
                 {listening ? (
-                  <MicOff className="h-5 w-5" />
+                  <MicOff className="h-[18px] w-[18px]" strokeWidth={1.8} />
                 ) : (
-                  <Mic className="h-5 w-5" />
+                  <Mic className="h-[18px] w-[18px]" strokeWidth={1.8} />
                 )}
-              </button>
+              </motion.button>
 
+              {/* Text area wrapper */}
               <div className="flex-1 group relative">
-                <div className="absolute -inset-0.5 bg-gradient-to-r from-accent/40 via-accent-glow/40 to-accent/40 rounded-2xl opacity-0 group-focus-within:opacity-50 blur-lg transition-opacity duration-500 pointer-events-none" />
-                <div className="relative flex items-end gap-2 p-2.5 rounded-2xl bg-bg-card/80 border border-white/[0.06] backdrop-blur-xl">
+                {/* Outer glow — only on focus */}
+                <motion.div
+                  className="absolute -inset-px rounded-2xl pointer-events-none"
+                  initial={false}
+                  style={{
+                    background:
+                      "linear-gradient(135deg, rgb(var(--accent)/0.35) 0%, rgb(var(--accent-glow)/0.25) 100%)",
+                    opacity: 0,
+                  }}
+                  animate={{ opacity: hasText || listening ? 0.6 : 0 }}
+                  transition={{ duration: 0.4 }}
+                />
+
+                <div
+                  className={cn(
+                    "relative flex items-end gap-2",
+                    "p-2.5 rounded-[18px]",
+                    "bg-bg-card/70 backdrop-blur-2xl",
+                    "border border-white/[0.065]",
+                    "shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]",
+                    "transition-[border-color,box-shadow] duration-300",
+                    "group-focus-within:border-accent/30",
+                    "group-focus-within:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_0_32px_-8px_rgb(var(--accent-glow)/0.25)]"
+                  )}
+                >
                   <textarea
                     ref={ref}
                     rows={1}
@@ -126,29 +182,63 @@ export const CoreInput = forwardRef<HTMLTextAreaElement, CoreInputProps>(
                     }}
                     placeholder="Skriv ett kommando…"
                     disabled={pending}
-                    className="flex-1 resize-none bg-transparent outline-none px-2 py-2 text-[15px] text-ink placeholder:text-ink-mute"
-                    style={{ minHeight: 40, maxHeight: 150 }}
+                    className={cn(
+                      "flex-1 resize-none bg-transparent outline-none",
+                      "px-2 py-2 text-[14px] leading-relaxed",
+                      "text-ink placeholder:text-ink-mute/60",
+                      "disabled:opacity-50"
+                    )}
+                    style={{ minHeight: 40, maxHeight: 160 }}
                   />
-                  <button
+
+                  {/* Send button */}
+                  <motion.button
                     type="button"
                     onClick={onSend}
                     disabled={pending || !hasText}
-                    title="Send"
-                    aria-label="Send"
+                    title="Skicka"
+                    aria-label="Skicka"
+                    whileHover={hasText && !pending ? { scale: 1.08 } : {}}
+                    whileTap={hasText && !pending ? { scale: 0.92 } : {}}
                     className={cn(
-                      "h-9 w-9 rounded-xl flex items-center justify-center transition-all shrink-0",
+                      "h-9 w-9 rounded-[13px] flex items-center justify-center",
+                      "transition-all duration-200 shrink-0 overflow-hidden relative",
                       hasText && !pending
-                        ? "bg-accent text-white hover:bg-accent-soft shadow-glow"
-                        : "bg-white/[0.05] text-ink-mute"
+                        ? [
+                            "bg-accent text-white",
+                            "shadow-[0_2px_12px_-2px_rgb(var(--accent-glow)/0.6)]",
+                            "hover:bg-accent-soft hover:shadow-[0_2px_20px_-2px_rgb(var(--accent-glow)/0.75)]",
+                          ]
+                        : "bg-white/[0.04] text-ink-mute/50"
                     )}
                   >
-                    <ArrowUp className="h-4 w-4" />
-                  </button>
+                    {/* Sweep glow effect */}
+                    {hasText && !pending && (
+                      <motion.div
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                          background:
+                            "linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 60%)",
+                        }}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: [0, 0.8, 0], x: [-20, 20] }}
+                        transition={{
+                          duration: 1.8,
+                          repeat: Infinity,
+                          repeatDelay: 2,
+                          ease: "easeInOut",
+                        }}
+                      />
+                    )}
+                    <ArrowUp className="h-4 w-4 relative z-10" strokeWidth={2.2} />
+                  </motion.button>
                 </div>
               </div>
             </div>
-            <p className="text-[11px] text-ink-mute text-center mt-2">
-              Enter för att skicka · Shift+Enter ny rad · F1 kommandon · F5 fokus
+
+            {/* Keyboard hints */}
+            <p className="text-[10px] text-ink-mute/40 text-center mt-2.5 tracking-wide">
+              Enter skicka &middot; Shift+Enter ny rad &middot; F1 kommandon &middot; F5 fokus
             </p>
           </motion.div>
         )}
