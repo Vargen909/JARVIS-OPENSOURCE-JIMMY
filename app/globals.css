@@ -1,0 +1,300 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ────────────────────────────────────────────────────────────────────────────
+   B.O.B Design System — global tokens
+   ──────────────────────────────────────────────────────────────────────────── */
+
+/* Default palette: Neural Blue */
+:root,
+[data-palette="neural-blue"] {
+  color-scheme: dark;
+  --bg: 11 13 18;
+  --bg-soft: 17 20 27;
+  --bg-card: 22 26 35;
+  --ink: 231 235 242;
+  --ink-dim: 154 163 178;
+  --ink-mute: 107 116 132;
+  --accent: 124 156 255;
+  --accent-soft: 90 120 255;
+  --accent-glow: 156 180 255;
+  --border: 34 39 52;
+  --ring: 124 156 255;
+}
+
+[data-palette="violet"] {
+  --bg: 10 8 18;
+  --bg-soft: 16 12 28;
+  --bg-card: 22 16 38;
+  --ink: 237 233 254;
+  --ink-dim: 167 139 250;
+  --ink-mute: 124 100 180;
+  --accent: 168 85 247;
+  --accent-soft: 139 92 246;
+  --accent-glow: 192 132 252;
+  --border: 46 32 72;
+  --ring: 168 85 247;
+}
+
+[data-palette="green"] {
+  --bg: 8 14 12;
+  --bg-soft: 12 22 18;
+  --bg-card: 16 30 24;
+  --ink: 236 253 245;
+  --ink-dim: 110 231 183;
+  --ink-mute: 74 150 120;
+  --accent: 52 211 153;
+  --accent-soft: 16 185 129;
+  --accent-glow: 110 231 183;
+  --border: 24 52 42;
+  --ring: 52 211 153;
+}
+
+[data-palette="arctic"] {
+  --bg: 14 16 20;
+  --bg-soft: 22 24 30;
+  --bg-card: 30 34 42;
+  --ink: 248 250 252;
+  --ink-dim: 203 213 225;
+  --ink-mute: 148 163 184;
+  --accent: 226 232 240;
+  --accent-soft: 203 213 225;
+  --accent-glow: 241 245 249;
+  --border: 51 65 85;
+  --ring: 226 232 240;
+}
+
+[data-palette="dark-matter"] {
+  --bg: 6 6 8;
+  --bg-soft: 12 12 16;
+  --bg-card: 18 18 24;
+  --ink: 212 212 220;
+  --ink-dim: 140 140 155;
+  --ink-mute: 90 90 105;
+  --accent: 100 100 115;
+  --accent-soft: 80 80 95;
+  --accent-glow: 130 130 145;
+  --border: 32 32 40;
+  --ring: 100 100 115;
+}
+
+[data-palette="amber"] {
+  --bg: 14 10 6;
+  --bg-soft: 22 16 10;
+  --bg-card: 30 22 14;
+  --ink: 254 243 199;
+  --ink-dim: 217 180 120;
+  --ink-mute: 160 130 80;
+  --accent: 245 158 11;
+  --accent-soft: 217 119 6;
+  --accent-glow: 252 211 77;
+  --border: 60 42 20;
+  --ring: 245 158 11;
+}
+
+/* ── Cross-palette runtime variables ──
+   These propagate to every palette so JS-driven adjustments work the same
+   regardless of which color palette is active. */
+:root,
+[data-palette="neural-blue"],
+[data-palette="violet"],
+[data-palette="green"],
+[data-palette="arctic"],
+[data-palette="dark-matter"],
+[data-palette="amber"] {
+  --glow-intensity: 1;
+  --brain-scale: 1;
+}
+
+/* ── shadcn-style alias tokens (for legacy v0 component shims) ── */
+:root {
+  --primary: var(--accent);
+  --primary-foreground: var(--ink);
+  --accent-token: var(--accent);
+  --secondary: var(--bg-soft);
+  --muted: var(--bg-soft);
+  --muted-foreground: var(--ink-mute);
+  --card: var(--bg-card);
+  --card-foreground: var(--ink);
+  --foreground: var(--ink);
+  --background: var(--bg);
+  --glow: var(--accent-glow);
+  --glow-muted: var(--accent);
+
+  /* ── Z-index spec ──
+     z-bg .......... 0   (cinematic background)
+     z-content ..... 10  (page content)
+     z-chrome ...... 20  (top nav / app header)
+     z-dropdown .... 30  (engine picker, selects)
+     z-floating-nav  40  (Core fullscreen nav pill)
+     z-webview ..... 45  (embedded webview)
+     z-modal ....... 50  (modals, drawers)
+   */
+  --z-bg: 0;
+  --z-content: 10;
+  --z-chrome: 20;
+  --z-dropdown: 30;
+  --z-floating-nav: 40;
+  --z-webview: 45;
+  --z-modal: 50;
+
+  /* Layout heights — used to keep content from clipping under chrome */
+  --bob-nav-h: 56px;            /* desktop top header */
+  --bob-mobile-nav-h: 48px;     /* mobile pill nav strip below header */
+  --bob-floating-nav-h: 64px;   /* floating nav band on Core (top-5 + content) */
+}
+
+/* ── Density ── */
+[data-density="compact"]  { --space-unit: 0.75; }
+[data-density="default"]  { --space-unit: 1;    }
+[data-density="spacious"] { --space-unit: 1.25; }
+
+/* ────────────────────────────────────────────────────────────────────────────
+   Base
+   ──────────────────────────────────────────────────────────────────────────── */
+html,
+body {
+  @apply bg-bg text-ink antialiased;
+  transition:
+    background-color 0.35s ease,
+    color 0.25s ease;
+  background-image:
+    radial-gradient(1200px 600px at 50% -10%, rgb(var(--accent-glow) / 0.18), transparent 60%),
+    radial-gradient(900px 500px at 100% 100%, rgb(var(--accent) / 0.06), transparent 60%);
+  background-attachment: fixed;
+}
+
+* { @apply border-border; }
+
+::selection { background: rgb(var(--accent) / 0.35); }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.08); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.16); }
+
+/* ────────────────────────────────────────────────────────────────────────────
+   Component layer
+   ──────────────────────────────────────────────────────────────────────────── */
+@layer components {
+  .glass        { @apply bg-white/[0.04] backdrop-blur-xl  border border-white/[0.06]; }
+  .glass-strong { @apply bg-white/[0.06] backdrop-blur-2xl border border-white/[0.08]; }
+  .panel        { @apply rounded-2xl border border-white/[0.06] bg-bg-card/80 shadow-card backdrop-blur-xl; }
+  .panel-strong { @apply rounded-2xl border border-white/[0.08] bg-bg-card/90 shadow-card backdrop-blur-2xl; }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium
+           transition-all duration-150 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40;
+  }
+  .btn-primary { @apply btn bg-accent text-white hover:bg-accent-soft shadow-glow; }
+  .btn-ghost   { @apply btn bg-white/[0.03] text-ink hover:bg-white/[0.07] border border-white/[0.06]; }
+
+  .input {
+    @apply w-full rounded-xl bg-bg-soft/80 border border-white/[0.06] px-3 py-2 text-sm
+           text-ink placeholder:text-ink-mute outline-none
+           focus:border-accent/60 focus:ring-2 focus:ring-accent/20;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium
+           bg-white/[0.05] border border-white/[0.06] text-ink-dim;
+  }
+
+  .density-gap { gap: calc(0.75rem * var(--space-unit, 1)); }
+  .density-p   { padding: calc(1rem * var(--space-unit, 1)); }
+
+  .section-label {
+    @apply text-[10px] uppercase tracking-[0.12em] text-ink-mute font-semibold;
+  }
+
+  .icon-badge    { @apply w-10 h-10 rounded-xl bg-accent/15 flex items-center justify-center shrink-0; }
+  .icon-badge-sm { @apply w-8  h-8  rounded-lg bg-accent/15 flex items-center justify-center shrink-0; }
+
+  .glow-input:focus-within {
+    box-shadow:
+      0 0 0 1px rgb(var(--accent) / 0.35),
+      0 0 24px -6px rgb(var(--accent-glow) / 0.35);
+  }
+
+  .status-active  { @apply w-2 h-2 rounded-full bg-emerald-400 shrink-0; }
+  .status-offline { @apply w-2 h-2 rounded-full bg-white/20      shrink-0; }
+
+  .accent-border-top {
+    border-top: 1px solid transparent;
+    background-clip: padding-box;
+    position: relative;
+  }
+  .accent-border-top::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    top: -1px;
+    border-top: 1px solid rgb(var(--accent) / 0.4);
+    border-radius: inherit;
+    pointer-events: none;
+  }
+
+  .view-header { @apply flex items-center gap-3 mb-8; }
+
+  /* ── Typography scale (B.O.B) ── */
+  .t-display { @apply text-3xl font-semibold tracking-tight; }
+  .t-h1      { @apply text-2xl font-semibold tracking-tight; }
+  .t-h2      { @apply text-xl  font-semibold tracking-tight; }
+  .t-body    { font-size: 15px; line-height: 1.55; }
+  .t-meta    { font-size: 10px; @apply uppercase tracking-[0.12em] text-ink-mute font-semibold; }
+  .t-mono    { font-family: var(--font-mono), ui-monospace, monospace; }
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+   Animation primitives
+   ──────────────────────────────────────────────────────────────────────────── */
+.dot-pulse {
+  background: currentColor;
+  border-radius: 999px;
+  width: 6px;
+  height: 6px;
+  animation: pulseSoft 1.2s ease-in-out infinite;
+}
+
+.neural-glow {
+  filter: drop-shadow(
+    0 0 calc(40px * var(--glow-intensity))
+      rgb(var(--accent-glow) / 0.55)
+  );
+}
+
+/* ── B.O.B keyframes (replaces local ncv2-* in legacy components) ── */
+@keyframes bob-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes bob-spin-reverse {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(-360deg); }
+}
+@keyframes bob-soft-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.18); }
+}
+@keyframes bob-breathe {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.04); }
+}
+
+/* ── Reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .neural-glow,
+  .animate-spin-slow,
+  .animate-spin-slow-reverse,
+  .animate-glow-pulse,
+  .dot-pulse {
+    animation: none !important;
+  }
+  [style*="bob-spin"],
+  [style*="bob-soft-pulse"],
+  [style*="bob-breathe"] {
+    animation: none !important;
+  }
+  html, body { transition: none; }
+}
