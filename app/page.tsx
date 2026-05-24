@@ -94,7 +94,7 @@ export default function Home() {
 
           <button
             className="btn-primary w-full justify-center gap-2"
-            onClick={() => refresh()}
+            onClick={() => void refresh()}
           >
             <RefreshCw className="w-4 h-4" />
             Retry Connection

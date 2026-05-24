@@ -24,6 +24,10 @@ export interface MappedError {
 /** Extract the port from API_BASE so the offline message stays accurate. */
 export function backendPort(base: string = API_BASE): string {
   try {
+    // Handle relative URLs (like /api/bob) - return default port
+    if (base.startsWith("/")) {
+      return "3000";
+    }
     return new URL(base).port || "8765";
   } catch {
     return "8765";

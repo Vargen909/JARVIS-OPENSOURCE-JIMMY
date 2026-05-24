@@ -11,9 +11,8 @@ import type {
 
 // Use the Next.js API proxy to reach the Python backend
 // This allows the preview to work in v0's sandbox environment
-const BASE =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
-  "/api/bob";
+// IMPORTANT: Hardcoded to /api/bob to work in v0 preview
+const BASE = "/api/bob";
 
 const isDev = process.env.NODE_ENV !== "production";
 

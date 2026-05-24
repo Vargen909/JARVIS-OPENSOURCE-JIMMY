@@ -66,11 +66,13 @@ export function BobProvider({ children }: { children: React.ReactNode }) {
   const refresh = useCallback(async () => {
     try {
       migrateActiveUserKey();
+      console.log("[v0] Starting API calls...");
       const [i, u, e] = await Promise.all([
         api.info(),
         api.listUsers(),
         api.engines(),
       ]);
+      console.log("[v0] API responses:", { info: i, users: u, engines: e });
       setInfo(i);
       setUsers(u);
       setEngines(e);
@@ -85,7 +87,7 @@ export function BobProvider({ children }: { children: React.ReactNode }) {
         _setActiveUserId(null);
       }
     } catch (err) {
-      console.error("refresh failed", err);
+      console.error("[v0] refresh failed", err);
       setInfo(null);
       setEngines([]);
     } finally {
@@ -94,6 +96,7 @@ export function BobProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    console.log("[v0] useEffect running, calling refresh...");
     refresh();
   }, [refresh]);
 
