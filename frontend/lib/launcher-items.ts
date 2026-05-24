@@ -34,7 +34,7 @@ import {
   Terminal,
   Users,
 } from "lucide-react";
-import type { ViewType } from "@/components/view-navigation";
+import type { ViewType } from "@/components/shell/app-chrome";
 
 // ── Accent palette ──────────────────────────────────────────────────────────
 
@@ -94,22 +94,13 @@ export const LAUNCHER_ITEMS: LauncherItem[] = [
 
   // ── Row 1 ────────────────────────────────────────────────────────────────
   {
-    id: "dashboard",
-    label: "Dashboard",
-    description: "Command center",
+    id: "workspace",
+    label: "Workspace",
+    description: "Module grid",
     icon: LayoutDashboard,
     accent: "blue",
     status: "available",
-    action: { kind: "view", view: "command-center" },
-  },
-  {
-    id: "memory",
-    label: "Memory",
-    description: "Persistent knowledge",
-    icon: Brain,
-    accent: "violet",
-    status: "available",
-    action: { kind: "view", view: "memory" },
+    action: { kind: "view", view: "launcher" },
   },
   {
     id: "settings",
@@ -121,42 +112,13 @@ export const LAUNCHER_ITEMS: LauncherItem[] = [
     action: { kind: "settings" },
   },
   {
-    id: "code-mode",
-    label: "Code Mode",
-    description: "Developer workspace",
-    icon: Code,
-    accent: "cyan",
-    status: "available",
-    action: { kind: "view", view: "developer" },
-  },
-  {
-    id: "terminal",
-    label: "Terminal",
-    description: "System terminal",
-    icon: Terminal,
-    accent: "emerald",
-    status: "soon",
-    action: { kind: "soon" },
-  },
-
-  // ── Row 2 ────────────────────────────────────────────────────────────────
-  {
     id: "notes",
     label: "Notes",
     description: "Saved thoughts",
     icon: StickyNote,
     accent: "amber",
     status: "available",
-    action: { kind: "view", view: "memory" },
-  },
-  {
-    id: "files",
-    label: "Files",
-    description: "File workspace",
-    icon: Folder,
-    accent: "orange",
-    status: "soon",
-    action: { kind: "soon" },
+    action: { kind: "view", view: "launcher" },
   },
   {
     id: "browser",
@@ -166,6 +128,35 @@ export const LAUNCHER_ITEMS: LauncherItem[] = [
     accent: "sky",
     status: "available",
     action: { kind: "webview", url: "https://www.google.com" },
+  },
+  {
+    id: "code-mode",
+    label: "Code Mode",
+    description: "Developer workspace",
+    icon: Code,
+    accent: "cyan",
+    status: "available",
+    action: { kind: "view", view: "launcher" },
+  },
+
+  // ── Row 2 ────────────────────────────────────────────────────────────────
+  {
+    id: "terminal",
+    label: "Terminal",
+    description: "System terminal",
+    icon: Terminal,
+    accent: "emerald",
+    status: "soon",
+    action: { kind: "soon" },
+  },
+  {
+    id: "files",
+    label: "Files",
+    description: "File workspace",
+    icon: Folder,
+    accent: "orange",
+    status: "soon",
+    action: { kind: "soon" },
   },
   {
     id: "tasks",
@@ -182,6 +173,15 @@ export const LAUNCHER_ITEMS: LauncherItem[] = [
     description: "Document library",
     icon: BookOpen,
     accent: "indigo",
+    status: "soon",
+    action: { kind: "soon" },
+  },
+  {
+    id: "cloud",
+    label: "Cloud",
+    description: "Cloud services",
+    icon: Cloud,
+    accent: "blue",
     status: "soon",
     action: { kind: "soon" },
   },
@@ -224,25 +224,16 @@ export const LAUNCHER_ITEMS: LauncherItem[] = [
     action: { kind: "soon" },
   },
   {
-    id: "cloud",
-    label: "Cloud",
-    description: "Cloud services",
-    icon: Cloud,
-    accent: "blue",
+    id: "ai-models",
+    label: "AI Models",
+    description: "Model management",
+    icon: BrainCircuit,
+    accent: "purple",
     status: "soon",
     action: { kind: "soon" },
   },
 
   // ── Row 4 ────────────────────────────────────────────────────────────────
-  {
-    id: "developer",
-    label: "Developer",
-    description: "Models & plugins",
-    icon: Code,
-    accent: "sky",
-    status: "available",
-    action: { kind: "view", view: "developer" },
-  },
   {
     id: "debugger",
     label: "Debugger",
@@ -262,22 +253,13 @@ export const LAUNCHER_ITEMS: LauncherItem[] = [
     action: { kind: "soon" },
   },
   {
-    id: "ai-models",
-    label: "AI Models",
-    description: "Model management",
-    icon: BrainCircuit,
-    accent: "purple",
-    status: "available",
-    action: { kind: "view", view: "developer" },
-  },
-  {
     id: "voice-console",
     label: "Voice Console",
     description: "Voice & speech",
     icon: AudioLines,
     accent: "cyan",
-    status: "available",
-    action: { kind: "view", view: "core" },
+    status: "soon",
+    action: { kind: "soon" },
   },
   {
     id: "favorites",
@@ -288,8 +270,6 @@ export const LAUNCHER_ITEMS: LauncherItem[] = [
     status: "soon",
     action: { kind: "soon" },
   },
-
-  // ── Row 5 ────────────────────────────────────────────────────────────────
   {
     id: "team",
     label: "Team",
@@ -299,6 +279,8 @@ export const LAUNCHER_ITEMS: LauncherItem[] = [
     status: "soon",
     action: { kind: "soon" },
   },
+
+  // ── Row 5 ────────────────────────────────────────────────────────────────
   {
     id: "calendar",
     label: "Calendar",

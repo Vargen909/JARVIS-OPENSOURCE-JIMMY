@@ -7,7 +7,7 @@
  */
 
 import type { Action } from "./types";
-import type { ViewType } from "@/components/view-navigation";
+import type { ViewType } from "@/components/shell/app-chrome";
 import { api } from "./api";
 
 export interface ActionContext {
@@ -25,10 +25,6 @@ const VIEW_MAP: Record<string, ViewType> = {
   core: "core",
   launcher: "launcher",
   workspace: "launcher",
-  chat: "chat",
-  memory: "memory",
-  developer: "developer",
-  "command-center": "command-center",
 };
 
 export async function dispatchAction(

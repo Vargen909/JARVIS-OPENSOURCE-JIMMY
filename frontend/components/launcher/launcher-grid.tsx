@@ -1,7 +1,7 @@
 "use client";
 
 import { LAUNCHER_ITEMS, type LauncherAction } from "@/lib/launcher-items";
-import type { ViewType } from "@/components/view-navigation";
+import type { ViewType } from "@/components/shell/app-chrome";
 import { LauncherCard } from "./launcher-card";
 import { LauncherCoreCard } from "./launcher-core-card";
 

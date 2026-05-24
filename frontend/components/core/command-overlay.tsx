@@ -22,7 +22,7 @@ import {
 import { useJarvis } from "@/components/providers";
 import { api } from "@/lib/api";
 import type { ConversationOut } from "@/lib/types";
-import type { ViewType } from "@/components/view-navigation";
+import type { ViewType } from "@/components/shell/app-chrome";
 import { cn } from "@/lib/utils";
 
 interface CommandOverlayProps {
@@ -116,50 +116,6 @@ export function CommandOverlay({
         group: "Views",
         run: () => {
           onSelectView("core");
-          onClose();
-        },
-      },
-      {
-        id: "view:command-center",
-        label: "Command Center",
-        hint: "Operating dashboard",
-        icon: LayoutDashboard,
-        group: "Views",
-        run: () => {
-          onSelectView("command-center");
-          onClose();
-        },
-      },
-      {
-        id: "view:chat",
-        label: "Chat",
-        hint: "Threaded conversation",
-        icon: MessageSquare,
-        group: "Views",
-        run: () => {
-          onSelectView("chat");
-          onClose();
-        },
-      },
-      {
-        id: "view:developer",
-        label: "Developer",
-        hint: "Models, plugins, telemetry",
-        icon: Code,
-        group: "Views",
-        run: () => {
-          onSelectView("developer");
-          onClose();
-        },
-      },
-      {
-        id: "view:memory",
-        label: "Memory",
-        hint: "Persistent knowledge",
-        icon: Brain,
-        group: "Views",
-        run: () => {
-          onSelectView("memory");
           onClose();
         },
       },

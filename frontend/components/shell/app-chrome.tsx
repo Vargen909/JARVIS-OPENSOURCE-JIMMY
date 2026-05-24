@@ -1,11 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Settings2 } from "lucide-react";
-import { ViewNavigation, type ViewType } from "@/components/view-navigation";
+import { Settings2, Atom, LayoutGrid } from "lucide-react";
 import { BobCore } from "@/components/bob/bob-core";
 import { BobBackground } from "@/components/bob/bob-background";
 import { cn } from "@/lib/utils";
+
+export type ViewType = "core" | "launcher";
 
 interface AppChromeProps {
   activeView: ViewType;
@@ -47,7 +48,40 @@ export function AppChrome({
             )}
             style={{ top: "calc(env(safe-area-inset-top, 0px) + 1.25rem)" }}
           >
-            <ViewNavigation activeView={activeView} onViewChange={onViewChange} compact />
+            {/* Simple floating toggle: Core / Workspace */}
+            <motion.div
+              className="flex gap-1 p-1 rounded-full border border-white/[0.08] bg-bg-soft/70 backdrop-blur-2xl"
+            >
+              {(["core", "launcher"] as const).map((view) => (
+                <motion.button
+                  key={view}
+                  type="button"
+                  onClick={() => onViewChange(view)}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.96 }}
+                  className={cn(
+                    "relative flex items-center justify-center gap-1.5 w-9 h-9 rounded-full transition-colors duration-150",
+                    activeView === view
+                      ? "text-ink"
+                      : "text-ink-mute hover:text-ink-dim"
+                  )}
+                >
+                  {activeView === view && (
+                    <motion.div
+                      layoutId="activeNav"
+                      className="absolute inset-0 bg-white/[0.07] border border-white/[0.08] rounded-full"
+                      initial={false}
+                      transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                    />
+                  )}
+                  {view === "core" ? (
+                    <Atom className="h-4 w-4 relative z-10" strokeWidth={1.5} />
+                  ) : (
+                    <LayoutGrid className="h-4 w-4 relative z-10" strokeWidth={1.5} />
+                  )}
+                </motion.button>
+              ))}
+            </motion.div>
           </motion.div>
         )}
         <div
@@ -66,37 +100,76 @@ export function AppChrome({
 
       {/* ── Top header ── */}
       <header
-        className="relative z-[var(--z-chrome)] shrink-0 flex items-center justify-between gap-3 px-4 sm:px-6 border-b border-white/[0.04] bg-bg/55 backdrop-blur-xl"
+        className="relative z-[var(--z-chrome)] shrink-0 flex items-center justify-between gap-3 px-5 sm:px-7 border-b border-white/[0.035] bg-bg/70 backdrop-blur-2xl"
         style={{ height: "var(--bob-nav-h)" }}
       >
         <motion.div
-          initial={{ opacity: 0, x: -12 }}
+          initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           className="flex items-center gap-2.5 shrink-0"
         >
-          <BobCore variant="compact" size={28} className="shrink-0" />
-          <span className="font-semibold text-[15px] tracking-tight">B.O.B</span>
-          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-accent/10 text-accent border border-accent/20 font-mono">
+          <BobCore variant="compact" size={26} className="shrink-0" />
+          <span className="font-semibold text-[14px] tracking-wide text-ink">B.O.B</span>
+          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-accent/8 text-accent/70 border border-accent/15 font-mono tracking-widest">
             OS
           </span>
         </motion.div>
 
-        <div className="hidden md:flex flex-1 justify-center min-w-0">
-          <ViewNavigation
-            activeView={activeView}
-            onViewChange={onViewChange}
-            compact
-          />
-        </div>
+        {/* Simple nav toggle: Core / Workspace — hidden on mobile */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+          className="hidden md:flex gap-1 p-1 rounded-full border border-white/[0.08] bg-white/[0.03] backdrop-blur-xl"
+        >
+          {(["core", "launcher"] as const).map((view) => (
+            <motion.button
+              key={view}
+              type="button"
+              onClick={() => onViewChange(view)}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              title={view === "core" ? "Core" : "Workspace"}
+              className={cn(
+                "relative flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors duration-150",
+                activeView === view
+                  ? "text-ink"
+                  : "text-ink-mute hover:text-ink-dim"
+              )}
+            >
+              {activeView === view && (
+                <motion.div
+                  layoutId="activeHeaderNav"
+                  className="absolute inset-0 bg-white/[0.07] border border-white/[0.08] rounded-lg"
+                  initial={false}
+                  transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                />
+              )}
+              {view === "core" ? (
+                <>
+                  <Atom className="h-3.5 w-3.5 relative z-10" strokeWidth={2} />
+                  <span className="relative z-10 font-medium">Core</span>
+                </>
+              ) : (
+                <>
+                  <LayoutGrid className="h-3.5 w-3.5 relative z-10" strokeWidth={2} />
+                  <span className="relative z-10 font-medium">Workspace</span>
+                </>
+              )}
+            </motion.button>
+          ))}
+        </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, x: 12 }}
+          initial={{ opacity: 0, x: 10 }}
           animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
           className="flex items-center gap-2 shrink-0"
         >
           <button
             type="button"
-            className="btn-ghost py-1.5 px-3 text-xs"
+            className="btn-ghost py-1.5 px-3 text-xs gap-1.5 text-ink-mute hover:text-ink"
             onClick={onOpenCustomize}
             title="Customize"
           >
@@ -108,10 +181,46 @@ export function AppChrome({
 
       {/* ── Mobile nav strip ── */}
       <div
-        className="md:hidden relative z-[var(--z-chrome)] shrink-0 flex justify-center items-center border-b border-white/[0.04] bg-bg/40 backdrop-blur"
+        className="md:hidden relative z-[var(--z-chrome)] shrink-0 flex justify-center items-center border-b border-white/[0.035] bg-bg/40 backdrop-blur"
         style={{ height: "var(--bob-mobile-nav-h)" }}
       >
-        <ViewNavigation activeView={activeView} onViewChange={onViewChange} compact />
+        <motion.div
+          initial={{ opacity: 0, scale: 0.96 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          className="flex gap-1 p-1 rounded-full border border-white/[0.08] bg-white/[0.03] backdrop-blur"
+        >
+          {(["core", "launcher"] as const).map((view) => (
+            <motion.button
+              key={view}
+              type="button"
+              onClick={() => onViewChange(view)}
+              whileHover={{ scale: 1.04 }}
+              whileTap={{ scale: 0.96 }}
+              title={view === "core" ? "Core" : "Workspace"}
+              className={cn(
+                "relative flex items-center justify-center w-10 h-10 rounded-lg transition-colors duration-150",
+                activeView === view
+                  ? "text-ink"
+                  : "text-ink-mute hover:text-ink-dim"
+              )}
+            >
+              {activeView === view && (
+                <motion.div
+                  layoutId="activeMobileNav"
+                  className="absolute inset-0 bg-white/[0.07] border border-white/[0.08] rounded-lg"
+                  initial={false}
+                  transition={{ type: "spring", stiffness: 500, damping: 35 }}
+                />
+              )}
+              {view === "core" ? (
+                <Atom className="h-4 w-4 relative z-10" strokeWidth={1.5} />
+              ) : (
+                <LayoutGrid className="h-4 w-4 relative z-10" strokeWidth={1.5} />
+              )}
+            </motion.button>
+          ))}
+        </motion.div>
       </div>
 
       {/* ── Body ── */}
