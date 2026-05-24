@@ -13,6 +13,7 @@ import { api } from "./api";
 export interface ActionContext {
   setActiveView: (v: ViewType) => void;
   setSettingsOpen: (b: boolean) => void;
+  setMemoryDrawerOpen: (b: boolean) => void;
   setFocusMode: (b: boolean) => void;
   openWebView: (url: string) => void;
   addMemory: (content: string) => Promise<void>;
@@ -41,7 +42,7 @@ export async function dispatchAction(
       ctx.setSettingsOpen(true);
       break;
     case "open_memory":
-      ctx.setActiveView("memory");
+      ctx.setMemoryDrawerOpen(true);
       break;
     case "toggle_focus_mode":
       ctx.setFocusMode(!ctx.currentFocusMode);
