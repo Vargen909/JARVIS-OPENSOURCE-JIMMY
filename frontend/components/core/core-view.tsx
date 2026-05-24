@@ -4,10 +4,16 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useJarvis } from "@/components/providers";
 import { api } from "@/lib/api";
 import { mapChatError } from "@/lib/chat-errors";
-import type { MessageOut } from "@/lib/types";
+import { dispatchAction, type ActionContext } from "@/lib/actions";
+import type { Action } from "@/lib/types";
 import { useIdle } from "@/hooks/use-idle";
+import { useBobState } from "@/hooks/use-bob-state";
+import { useWakeWord } from "@/hooks/use-wake-word";
 import { useSpeechInput } from "@/hooks/use-speech-input";
-import { CoreCanvas } from "./core-canvas";
+import { useBobTts } from "@/hooks/use-bob-tts";
+import { useLayout } from "@/lib/use-layout-store";
+import { BobCore } from "@/components/bob/bob-core";
+import { BobSubtitle } from "./bob-subtitle";
 import { CoreInput } from "./core-input";
 import { CoreStatusBar } from "./core-status-bar";
 import { CoreFocusOverlay } from "./core-focus-overlay";
@@ -16,186 +22,332 @@ interface CoreViewProps {
   conversationId: number | null;
   onConversationCreated: (id: number) => void;
   confidential: boolean;
-  /** Neural Focus Mode — hide status/input until interaction. */
   focusMode?: boolean;
+  voiceMuted?: boolean;
+  /** ActionContext — wired from AppShell so actions can drive the shell. */
+  actionCtx?: Omit<ActionContext, "userId" | "currentFocusMode">;
 }
 
 const isDev = process.env.NODE_ENV !== "production";
 const dlog = (...a: unknown[]) =>
   isDev && typeof console !== "undefined" && console.debug("[bob:core]", ...a);
 
-/**
- * Cinematic full-screen Core view (orchestrator).
- *
- * Owns chat state and orchestrates three immersive sub-components:
- *   - CoreStatusBar  → top, fades on idle / hides in focus mode
- *   - CoreCanvas     → centerpiece (BobCore + state-aware text)
- *   - CoreInput      → bottom command bar, auto-hides on idle
- *
- * Backend behavior is unchanged: api.chat() with a thinking → speaking
- * → idle state arc, persisted via the active conversation. Voice input
- * uses the shared useSpeechInput hook and auto-sends on final transcript.
- */
 export function CoreView({
   conversationId,
   onConversationCreated,
   confidential,
   focusMode = false,
+  voiceMuted = false,
+  actionCtx,
 }: CoreViewProps) {
-  const { activeUser, engines, refresh } = useJarvis();
+  const {
+    activeUser,
+    engines,
+    refresh,
+    backendOnline,
+    activeEngineAvailable,
+    ready,
+  } = useJarvis();
+  const layout = useLayout();
+
+  // ── State machine ─────────────────────────────────────────────────────────
+  const { data: stateData, state, subtitle, isBusy, canRecord, dispatch } = useBobState();
 
   const [text, setText] = useState("");
-  const [pending, setPending] = useState(false);
-  const [speaking, setSpeaking] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [lastUserMessage, setLastUserMessage] = useState<string | null>(null);
-  const [lastReply, setLastReply] = useState<MessageOut | null>(null);
   const [now, setNow] = useState(new Date());
   const [vw, setVw] = useState(0);
   const [vh, setVh] = useState(0);
   const [simAmp, setSimAmp] = useState(0);
+  const [focusReveal, setFocusReveal] = useState(false);
+  const [pendingConfirmAction, setPendingConfirmAction] = useState<Action | null>(null);
 
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const speakingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const sendRef = useRef<(t?: string) => Promise<void>>(async () => {});
-
-  const [focusReveal, setFocusReveal] = useState(false);
+  const conversationIdRef = useRef(conversationId);
   const focusRevealTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const speakingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Idle fade: panels disappear after 4s without input. Override whenever
-  // the user is actively engaged with the system.
-  const isActive = text.trim().length > 0 || pending || speaking;
+  conversationIdRef.current = conversationId;
+
+  // ── Idle detection ────────────────────────────────────────────────────────
+  const isActive = text.trim().length > 0 || isBusy || state === "speaking" || state === "recording_command";
   const isIdle = useIdle({ timeoutMs: 4000, forceActive: isActive });
 
-  // Tick the wall clock once a second.
+  // ── Tick clock ───────────────────────────────────────────────────────────
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
 
-  // Focus the textarea on mount so the user can start typing immediately.
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+  useEffect(() => { inputRef.current?.focus(); }, []);
 
-  // Track viewport so the orb scales by both width and height.
   useEffect(() => {
-    const update = () => {
-      setVw(window.innerWidth);
-      setVh(window.innerHeight);
-    };
+    const update = () => { setVw(window.innerWidth); setVh(window.innerHeight); };
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  // Send chat — accepts an explicit override (used by voice) so we don't
-  // rely on async state propagation between speech recognition and React.
-  const doSend = useCallback(
-    async (override?: string) => {
-      if (!activeUser) return;
-      const message = (override ?? text).trim();
-      if (!message || pending) return;
+  // ── TTS sv-SE ────────────────────────────────────────────────────────────
+  const {
+    speak: ttsSpeak,
+    speaking: ttsSpeaking,
+    supported: ttsSupported,
+    hasSwedishVoice,
+    error: ttsError,
+    enabled: ttsEnabled,
+    setEnabled: setTtsEnabled,
+  } = useBobTts({
+    onEnd: () => dispatch({ type: "SPEAK_DONE" }),
+  });
 
-      dlog("submit", { len: message.length, override: override !== undefined });
-      setError(null);
-      setLastUserMessage(message);
-      setPending(true);
-      setSpeaking(false);
-
-      // Clear any prior speaking timer so quick replies don't end early.
-      if (speakingTimerRef.current) {
-        clearTimeout(speakingTimerRef.current);
-        speakingTimerRef.current = null;
+  const speakReply = useCallback(
+    (message: string) => {
+      // #region agent log
+      fetch('http://127.0.0.1:7746/ingest/323c32f1-7e73-4bd9-b362-3024f492143c',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'645a15'},body:JSON.stringify({sessionId:'645a15',runId:'wake-tts-debug-1',hypothesisId:'H5',location:'frontend/components/core/core-view.tsx:speakReply',message:'core speak reply branch',data:{ttsEnabled,ttsSupported,voiceMuted,messageLength:message.trim().length,state},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
+      if (ttsEnabled && ttsSupported) {
+        ttsSpeak(message);
+        return;
       }
+      if (speakingTimer.current) clearTimeout(speakingTimer.current);
+      speakingTimer.current = setTimeout(() => {
+        dispatch({ type: "SPEAK_DONE" });
+      }, 3000);
+    },
+    [dispatch, ttsEnabled, ttsSpeak, ttsSupported]
+  );
+
+  const executeConfirmedAction = useCallback(
+    async (action: Action, spokenReply?: string) => {
+      if (!activeUser || !actionCtx || action.type === "none") return;
+
+      dispatch({ type: "ACTION_START", label: action.label || "Utför åtgärd…" });
+      try {
+        await dispatchAction(action, {
+          ...actionCtx,
+          userId: activeUser.id,
+          currentFocusMode: layout.state.coreFocusMode,
+        });
+      } catch (e) {
+        dlog("action failed:", e);
+      }
+      dispatch({ type: "ACTION_DONE" });
+
+      if (spokenReply) {
+        dispatch({
+          type: "REPLY_RECEIVED",
+          replyText: spokenReply,
+          actionLabel: action.label || undefined,
+        });
+        speakReply(spokenReply);
+      }
+    },
+    [activeUser, actionCtx, dispatch, layout.state.coreFocusMode, speakReply]
+  );
+
+  const resolvePendingConfirmation = useCallback(
+    async (raw: string) => {
+      const normalized = raw.trim().toLowerCase();
+      const action = pendingConfirmAction;
+      if (!action) return false;
+
+      if (/^(ja|yes|ok|okej|kör|gör det|bekräfta)\b/i.test(normalized)) {
+        setPendingConfirmAction(null);
+        await executeConfirmedAction(
+          action,
+          `Okej, ${action.label || "jag utför åtgärden"}.`
+        );
+        return true;
+      }
+
+      if (/^(nej|no|avbryt|stop|stopp|inte nu)\b/i.test(normalized)) {
+        setPendingConfirmAction(null);
+        dispatch({
+          type: "REPLY_RECEIVED",
+          replyText: "Okej, jag avbryter.",
+        });
+        speakReply("Okej, jag avbryter.");
+        return true;
+      }
+
+      dispatch({
+        type: "REPLY_RECEIVED",
+        replyText: "Svara ja eller nej.",
+      });
+      speakReply("Svara ja eller nej.");
+      return true;
+    },
+    [dispatch, executeConfirmedAction, pendingConfirmAction, speakReply]
+  );
+
+  // ── Core runCommand ───────────────────────────────────────────────────────
+  const runCommand = useCallback(
+    async (message: string) => {
+      if (!activeUser) return;
+      const msg = message.trim();
+      if (!msg) return;
+      if (isBusy) return;
+
+      dlog("runCommand:", msg.slice(0, 80));
+      dispatch({ type: "THINK_START" });
 
       try {
         const res = await api.chat({
           user_id: activeUser.id,
-          conversation_id: conversationId ?? undefined,
-          message,
+          conversation_id: conversationIdRef.current ?? undefined,
+          message: msg,
           confidential,
         });
-        dlog("reply", { conversation_id: res.conversation_id });
-        setText("");
-        setLastReply(res.reply);
-        setSpeaking(true);
-        if (!conversationId) {
+        dlog("reply:", res.conversation_id, "actions:", res.actions?.length ?? 0);
+
+        if (!conversationIdRef.current) {
           onConversationCreated(res.conversation_id);
           refresh();
         }
-        speakingTimerRef.current = setTimeout(() => {
-          setSpeaking(false);
-          speakingTimerRef.current = null;
-        }, 2500);
+
+        const replyText = res.reply.content;
+        const firstAction = res.actions?.[0];
+        const actionLabel = firstAction?.label ?? "";
+
+        if (firstAction?.confirm) {
+          const confirmPrompt = `Ska jag ${firstAction.label || "utföra åtgärden"}? Säg ja eller nej.`;
+          setPendingConfirmAction(firstAction);
+          dispatch({
+            type: "REPLY_RECEIVED",
+            replyText: confirmPrompt,
+            actionLabel: actionLabel || undefined,
+          });
+          speakReply(confirmPrompt);
+          return;
+        }
+
+        dispatch({
+          type: "REPLY_RECEIVED",
+          replyText,
+          actionLabel: actionLabel || undefined,
+        });
+
+        // Execute actions before speaking.
+        if (firstAction && firstAction.type !== "none" && actionCtx) {
+          await executeConfirmedAction(firstAction);
+        }
+
+        // Speak the reply.
+        speakReply(replyText);
       } catch (e) {
         const mapped = mapChatError(e);
-        dlog("send failed", mapped);
-        setError(mapped.message);
-      } finally {
-        setPending(false);
+        dlog("runCommand failed:", mapped);
+        dispatch({ type: "ERROR", message: mapped.message });
       }
     },
-    [activeUser, text, pending, conversationId, confidential, onConversationCreated, refresh]
+    [activeUser, isBusy, confidential, dispatch, executeConfirmedAction, onConversationCreated, refresh, speakReply, actionCtx]
   );
 
-  // Keep the latest send fn in a ref so global event listeners and the
-  // speech hook always invoke the freshest closure.
-  sendRef.current = doSend;
+  // Cleanup speaking timer.
+  useEffect(() => () => { if (speakingTimer.current) clearTimeout(speakingTimer.current); }, []);
 
-  // Cleanup speaking timer on unmount.
-  useEffect(() => {
-    return () => {
-      if (speakingTimerRef.current) clearTimeout(speakingTimerRef.current);
-    };
-  }, []);
-
-  // Voice input — shared hook. Final transcript triggers an auto-send so
-  // the user can talk to B.O.B and get a reply without pressing send.
-  const speech = useSpeechInput({
-    onFinalTranscript: (t) => {
+  // ── Voice input (recording mode — triggered by wake word or mic button) ───
+  const {
+    listening: speechListening,
+    toggle: speechToggle,
+    stop: speechStop,
+    error: speechError,
+  } = useSpeechInput({
+    mode: "recording",
+    onFinalTranscript: async (t) => {
       if (!t) return;
       setText("");
-      void sendRef.current(t);
+      if (pendingConfirmAction) {
+        await resolvePendingConfirmation(t);
+        return;
+      }
+      dispatch({ type: "TRANSCRIBE_DONE", text: t });
+      void runCommand(t);
     },
   });
-  const speechErrorMsg = speech.error?.message ?? null;
-  const listening = speech.listening;
 
-  // Surface speech errors in the same banner as chat errors.
   useEffect(() => {
-    if (speechErrorMsg) setError(speechErrorMsg);
-  }, [speechErrorMsg]);
+    setTtsEnabled(!voiceMuted);
+    if (voiceMuted && state !== "muted") {
+      dispatch({ type: "MUTE_TOGGLE" });
+    } else if (!voiceMuted && state === "muted") {
+      dispatch({ type: "MUTE_TOGGLE" });
+    }
+    if (voiceMuted && speechListening) {
+      speechStop();
+    }
+  }, [dispatch, setTtsEnabled, speechListening, speechStop, state, voiceMuted]);
 
+  // ── Wake word (passive continuous sv-SE) ─────────────────────────────────
+  const wakeEnabled =
+    state !== "muted" &&
+    !isBusy &&
+    state !== "recording_command" &&
+    state !== "speaking" &&
+    !ttsSpeaking;
+
+  const { supported: wakeSupported, error: wakeError } = useWakeWord({
+    enabled: wakeEnabled,
+    onWake: () => {
+      dlog("wake word detected");
+      // #region agent log
+      fetch('http://127.0.0.1:7746/ingest/323c32f1-7e73-4bd9-b362-3024f492143c',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'645a15'},body:JSON.stringify({sessionId:'645a15',runId:'wake-tts-debug-1',hypothesisId:'H4',location:'frontend/components/core/core-view.tsx:onWake',message:'core wake handler invoked',data:{state,canRecord,wakeEnabled,voiceMuted},timestamp:Date.now()})}).catch(()=>{});
+      // #endregion
+      dispatch({ type: "WAKE_DETECTED" });
+      dispatch({ type: "RECORD_START" });
+      speechToggle();
+      requestAnimationFrame(() => inputRef.current?.focus());
+    },
+  });
+
+  // Auto-start passive listening on mount.
+  useEffect(() => {
+    dispatch({ type: "WAKE_LISTEN_START" });
+  }, [dispatch]);
+
+  // ── Keyboard shortcuts (global custom events from app-shell) ─────────────
   const toggleVoice = useCallback(() => {
-    if (!speech.supported) {
-      setError("Voice input is not supported in this browser.");
+    if (state === "muted") return;
+    if (speechListening) {
+      speechStop();
       return;
     }
-    speech.clearError();
-    speech.toggle();
-  }, [speech]);
+    if (canRecord) {
+      dispatch({ type: "RECORD_START" });
+      speechToggle();
+    }
+  }, [state, speechListening, speechStop, speechToggle, canRecord, dispatch]);
 
-  // Listen for global custom events from the shortcut layer.
   useEffect(() => {
     const onWake = () => {
+      if (state === "muted" || speechListening || !canRecord) return;
       setFocusReveal(true);
       if (focusRevealTimer.current) clearTimeout(focusRevealTimer.current);
       focusRevealTimer.current = setTimeout(() => setFocusReveal(false), 6000);
+      dispatch({ type: "WAKE_DETECTED" });
+      dispatch({ type: "RECORD_START" });
+      speechToggle();
       requestAnimationFrame(() => inputRef.current?.focus());
     };
     const onVoice = () => toggleVoice();
+    const onEsc = () => {
+      if (speechListening) speechStop();
+      dispatch({ type: "RESET" });
+      dispatch({ type: "WAKE_LISTEN_START" });
+    };
+
     window.addEventListener("bob:wake", onWake);
     window.addEventListener("bob:toggle-voice", onVoice);
+    window.addEventListener("bob:esc-recording", onEsc);
     return () => {
       window.removeEventListener("bob:wake", onWake);
       window.removeEventListener("bob:toggle-voice", onVoice);
+      window.removeEventListener("bob:esc-recording", onEsc);
       if (focusRevealTimer.current) clearTimeout(focusRevealTimer.current);
     };
-  }, [toggleVoice]);
+  }, [canRecord, dispatch, speechListening, speechStop, speechToggle, state, toggleVoice]);
 
-  // While in Neural Focus Mode, mousemove/keydown briefly reveals the
-  // input so the user can type without leaving focus mode.
+  // Focus mode: reveal input on mouse/keydown.
   useEffect(() => {
     if (!focusMode) return;
     const reveal = () => {
@@ -211,10 +363,9 @@ export function CoreView({
     };
   }, [focusMode]);
 
-  // Simulated speaking amplitude — drives the orb intensity while
-  // assistant text is "speaking". No real TTS yet; this is purely visual.
+  // Simulated orb amplitude while speaking (no real audio amp yet).
   useEffect(() => {
-    if (!speaking) {
+    if (state !== "speaking" && state !== "action_executing") {
       setSimAmp(0);
       return;
     }
@@ -228,34 +379,57 @@ export function CoreView({
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [speaking]);
+  }, [state]);
+
+  // Speech errors → error state.
+  useEffect(() => {
+    if (speechError) dispatch({ type: "ERROR", message: speechError.message });
+  }, [speechError, dispatch]);
 
   if (!activeUser) return null;
 
+  // ── Derived display values ────────────────────────────────────────────────
   const currentEngine = engines.find((e) => e.id === activeUser.preferred_engine);
-  const currentModelId =
-    activeUser.preferred_model || currentEngine?.default_model || "";
+  const currentModelId = activeUser.preferred_model || currentEngine?.default_model || "";
   const currentModel =
-    currentEngine?.models.find((m) => m.id === currentModelId) ||
-    currentEngine?.models[0];
+    currentEngine?.models.find((m) => m.id === currentModelId) || currentEngine?.models[0];
   const modelLabel =
     currentModel?.label || currentModel?.id || currentEngine?.label || "B.O.B";
 
-  // Reserve ~360px for header + state text + input + safety paddings.
-  const reservedH = 360;
+  const reservedH = 320;
   const horizCap = vw > 0 ? Math.max(220, vw - 80) : 380;
   const vertCap = vh > 0 ? Math.max(220, vh - reservedH) : 380;
   const orbSize = Math.min(480, horizCap, vertCap);
 
-  // In Neural Focus Mode, the orb dominates fully.
-  // Status bar is always hidden; input only revealed on activity (focusReveal).
-  const inputHidden = focusMode && !focusReveal && !isActive && !listening;
+  const inputHidden = focusMode && !focusReveal && !isActive && !speechListening;
   const statusHidden = focusMode;
+  const confirmPrompt = pendingConfirmAction
+    ? `Ska jag ${pendingConfirmAction.label || "utföra åtgärden"}?`
+    : null;
+  const wakeStatusMessage =
+    wakeError ||
+    (!wakeSupported
+      ? "Wake word stöds inte i den här webbläsaren. Använd mikrofonknappen."
+      : null);
+  const ttsStatusMessage = !ttsSupported
+    ? "Talutmatning stöds inte i den här webbläsaren."
+    : !hasSwedishVoice && ttsEnabled
+      ? "Ingen svensk systemröst hittades. B.O.B använder systemets standardröst."
+      : ttsError;
+  // Single-source-of-truth: wake/tts-status visas i subtitle (under orben).
+  // CoreInput-error reserveras för faktiska state-fel under aktiva operationer.
+  const subtitleText =
+    (state === "idle" || state === "passive_wake_listening") && wakeStatusMessage
+      ? wakeStatusMessage
+      : (state === "idle" || state === "passive_wake_listening") && ttsStatusMessage
+        ? ttsStatusMessage
+        : subtitle;
+  const inputError = state === "error" ? stateData.errorMessage : null;
 
-  // Speaking-only intensity (audio analyser detached from STT to avoid
-  // racing the SpeechRecognition mic permission).
-  const intensity =
-    (speaking ? 1 + simAmp * 0.6 : 1) * (focusMode ? 1.15 : 1);
+  const isSpeaking = state === "speaking" || state === "action_executing";
+  const isListening = state === "recording_command" || state === "wake_detected" || speechListening;
+  const isPending = state === "thinking" || state === "transcribing";
+  const intensity = (isSpeaking ? 1 + simAmp * 0.6 : 1) * (focusMode ? 1.15 : 1);
 
   return (
     <div className="relative h-full w-full flex flex-col items-center min-h-0">
@@ -263,32 +437,57 @@ export function CoreView({
       <CoreStatusBar
         now={now}
         modelLabel={modelLabel}
-        pending={pending}
-        listening={listening}
+        pending={isPending}
+        listening={isListening}
+        backendOnline={backendOnline}
+        activeEngineAvailable={activeEngineAvailable}
+        ready={ready}
         idle={isIdle}
         hidden={statusHidden}
       />
 
-      <CoreCanvas
-        size={orbSize}
-        pending={pending}
-        speaking={speaking}
-        listening={listening}
-        lastUserMessage={lastUserMessage}
-        lastReplyContent={lastReply?.content}
-        userName={activeUser.name}
-        minimal={focusMode}
-        intensity={intensity}
-      />
+      {/* Orb */}
+      <div className="relative z-10 flex-1 min-h-0 flex flex-col items-center justify-center w-full px-6">
+        <BobCore
+          variant="cinematic"
+          size={orbSize}
+          isThinking={isPending}
+          isSpeaking={isSpeaking}
+          isListening={isListening}
+          intensity={intensity}
+        />
+        <BobSubtitle
+          state={state}
+          subtitle={subtitleText}
+          intensity={intensity}
+          minimal={focusMode}
+        />
+      </div>
 
       <CoreInput
         ref={inputRef}
         text={text}
         onTextChange={setText}
-        pending={pending}
-        listening={listening}
-        error={error}
-        onSend={() => void doSend()}
+        pending={isPending}
+        listening={speechListening}
+        error={inputError}
+        confirmPrompt={confirmPrompt}
+        onConfirm={() => {
+          void resolvePendingConfirmation("ja");
+        }}
+        onCancel={() => {
+          void resolvePendingConfirmation("nej");
+        }}
+        onSend={() => {
+          const msg = text.trim();
+          if (!msg) return;
+          setText("");
+          if (pendingConfirmAction) {
+            void resolvePendingConfirmation(msg);
+            return;
+          }
+          void runCommand(msg);
+        }}
         onToggleVoice={toggleVoice}
         idle={isIdle}
         hidden={inputHidden}

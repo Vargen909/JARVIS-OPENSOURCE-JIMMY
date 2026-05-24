@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { SettingsDrawer } from "./settings-drawer";
 import { MemoryDrawer } from "./memory-drawer";
@@ -12,16 +12,20 @@ import { CommandCenterView } from "./views/command-center-view";
 import { ChatView } from "./views/chat-view";
 import { MemoryView } from "./views/memory-view";
 import { DeveloperView } from "./views/developer-view";
+import { LauncherView } from "./views/launcher-view";
 import { AppChrome } from "./shell/app-chrome";
 import { nextViewInCycle, type ViewType } from "./view-navigation";
 import { useWebView } from "@/hooks/useWebView";
 import { useIdle } from "@/hooks/use-idle";
 import { useLayout } from "@/lib/use-layout-store";
 import { useCoreShortcuts, readVoiceMuted, writeVoiceMuted } from "./core/use-core-shortcuts";
+import { useJarvis } from "@/components/providers";
+import { api } from "@/lib/api";
 
 export function AppShell() {
   const webView = useWebView();
   const layout = useLayout();
+  const { activeUser } = useJarvis();
   const [conversationId, setConversationId] = useState<number | null>(null);
   const [confidential, setConfidential] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -29,8 +33,10 @@ export function AppShell() {
   const [customizeOpen, setCustomizeOpen] = useState(false);
   const [commandOverlayOpen, setCommandOverlayOpen] = useState(false);
   const [voiceMuted, setVoiceMuted] = useState(false);
-  /** Default: iconic Core home screen */
-  const [activeView, setActiveView] = useState<ViewType>("core");
+  const [pendingVoiceToggle, setPendingVoiceToggle] = useState(0);
+  const [pendingWake, setPendingWake] = useState(0);
+  /** Default: Workspace launcher — the premium OS landing screen */
+  const [activeView, setActiveView] = useState<ViewType>("launcher");
 
   useEffect(() => {
     setVoiceMuted(readVoiceMuted());
@@ -43,7 +49,7 @@ export function AppShell() {
   });
   const focusMode = layout.state.coreFocusMode && activeView === "core";
 
-  const handleViewChange = (v: ViewType) => {
+  const handleViewChange = useCallback((v: ViewType) => {
     if (v === "settings") {
       setSettingsOpen(true);
       return;
@@ -53,7 +59,38 @@ export function AppShell() {
       return;
     }
     setActiveView(v);
-  };
+  }, []);
+
+  const coreActionCtx = useCallback(
+    () => ({
+      setActiveView: handleViewChange,
+      setSettingsOpen,
+      setFocusMode: (b: boolean) =>
+        layout.dispatch({ type: "SET_FOCUS_MODE", value: b }),
+      openWebView: webView.openUrl,
+      addMemory: async (content: string) => {
+        if (!activeUser) return;
+        await api.addMemory(activeUser.id, content, "note");
+      },
+      newConversation: () => setConversationId(null),
+    }),
+    [activeUser, handleViewChange, webView.openUrl, layout]
+  );
+
+  // When shortcuts request wake/voice from another view, wait until Core
+  // has actually mounted before dispatching the CustomEvent. This avoids
+  // losing the event during the view transition.
+  useEffect(() => {
+    if (activeView !== "core") return;
+    if (pendingVoiceToggle > 0) {
+      window.dispatchEvent(new CustomEvent("bob:toggle-voice"));
+      setPendingVoiceToggle(0);
+    }
+    if (pendingWake > 0) {
+      window.dispatchEvent(new CustomEvent("bob:wake"));
+      setPendingWake(0);
+    }
+  }, [activeView, pendingVoiceToggle, pendingWake]);
 
   // Immersive keyboard shortcuts — wired globally; some are routed through
   // window CustomEvents so the active CoreView instance can react.
@@ -62,7 +99,11 @@ export function AppShell() {
       toggleCommandOverlay: () => setCommandOverlayOpen((o) => !o),
       cycleView: () => setActiveView((v) => nextViewInCycle(v)),
       toggleVoice: () => {
-        if (activeView !== "core") setActiveView("core");
+        if (activeView !== "core") {
+          setPendingVoiceToggle((n) => n + 1);
+          setActiveView("core");
+          return;
+        }
         window.dispatchEvent(new CustomEvent("bob:toggle-voice"));
       },
       toggleVoiceMute: () =>
@@ -90,7 +131,11 @@ export function AppShell() {
         if (webView.isOpen) return webView.close();
       },
       wakeBob: () => {
-        if (activeView !== "core") setActiveView("core");
+        if (activeView !== "core") {
+          setPendingWake((n) => n + 1);
+          setActiveView("core");
+          return;
+        }
         window.dispatchEvent(new CustomEvent("bob:wake"));
       },
     },
@@ -175,6 +220,8 @@ export function AppShell() {
                 onConversationCreated={(id) => setConversationId(id)}
                 confidential={confidential}
                 focusMode={focusMode}
+                voiceMuted={voiceMuted}
+                actionCtx={coreActionCtx()}
               />
             </motion.div>
           </AnimatePresence>
@@ -226,6 +273,14 @@ export function AppShell() {
               />
             )}
 
+            {activeView === "launcher" && (
+              <LauncherView
+                onViewChange={handleViewChange}
+                onOpenSettings={() => setSettingsOpen(true)}
+                onOpenCustomize={() => setCustomizeOpen(true)}
+                onOpenWebView={webView.openUrl}
+              />
+            )}
             {activeView === "memory" && <MemoryView />}
             {activeView === "developer" && <DeveloperView />}
           </motion.div>

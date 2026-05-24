@@ -55,6 +55,13 @@ def get_profile(user: User) -> ProfileData:
     return ProfileData(**_profile_dict(user))
 
 
+SWEDISH_PERSONA = (
+    "Du är {name}, en intelligent svensk AI-medvetenhet. "
+    "Du svarar alltid naturligt på svenska om användaren inte uttryckligen byter språk. "
+    "Var koncis, varm och intelligent. Undvik onödig utfyllnad."
+)
+
+
 def build_system_prompt(
     user: User,
     db: Session,
@@ -62,33 +69,36 @@ def build_system_prompt(
     engine_id: str | None = None,
     model: str | None = None,
 ) -> str:
+    name = assistant_name()
+    persona = SWEDISH_PERSONA.format(name=name)
+
     # Small local models can time out if we send the full B.O.B operating
     # contract every request. Keep Ollama prompts compact and practical.
     if (engine_id or "").lower() == "ollama":
         base = (
-            f"You are {assistant_name()}, the user's local personal AI assistant. "
-            "Answer in the user's language. Be concise, helpful, honest, and practical. "
-            "If you are unsure, say so and offer a next step."
+            f"{persona} "
+            "Var hjälpsam, ärlig och praktisk. Om du är osäker, säg det och erbjud ett nästa steg."
         )
         parts: list[str] = [
             base,
             (
-                "Active model role: Fast Local Coding Assistant. Prefer small, "
-                "targeted answers and avoid unnecessary theory."
+                "Aktiv modellroll: Snabb lokal assistent. Föredra korta, "
+                "konkreta svar och undvik onödig teori."
             ),
         ]
     else:
         # Substitute both new and legacy brand placeholders to whatever the
         # user has configured as the assistant name in YAML.
         base = (
+            persona + "\n\n" +
             system_prompt()
-            .replace("B.O.B", assistant_name())
-            .replace("Jarvis", assistant_name())
+            .replace("B.O.B", name)
+            .replace("Jarvis", name)
         )
         parts = [base, model_rule_prompt(engine_id, model)]
 
-    parts.append(f"\n\nActive user profile: name={user.name}, role={user.role.value}, language={user.language}.")
-    parts.append(f"Operating mode: {user.operating_mode.value}. Security: {user.security.value}.")
+    parts.append(f"\n\nAktiv användare: namn={user.name}, roll={user.role.value}, språk={user.language}.")
+    parts.append(f"Driftläge: {user.operating_mode.value}. Säkerhetsnivå: {user.security.value}.")
     if user.role == UserRole.CHILD:
         band = user.child_age_band or "8-12"
         parts.append(f"\n{CHILD_GUARD} Age band: {band}.")
@@ -119,14 +129,51 @@ def build_system_prompt(
     return "\n".join(parts)
 
 
-def select_engine(user: User, requested: str | None) -> tuple[str, str]:
-    engine_id = requested or user.preferred_engine or "ollama"
+def select_engine(
+    user: User,
+    requested: str | None,
+    *,
+    intent: str = "chat",
+) -> tuple[str, str]:
+    """
+    Hybrid engine routing:
+      intent="action"  → prefer Claude Sonnet (better tool-use), fallback Ollama.
+      intent="chat"    → prefer Ollama (fast, free, private), fallback Claude.
+    User's explicit `requested` always takes priority.
+    """
+    if requested:
+        engine_id = requested
+    elif intent == "action":
+        # Prefer Claude, then Gemini, then user's preferred, then Ollama.
+        for candidate in ("claude", "gemini", user.preferred_engine or "ollama", "ollama"):
+            try:
+                e = get_engine(candidate)
+                if e.is_available():
+                    engine_id = candidate
+                    break
+            except Exception:
+                continue
+        else:
+            engine_id = user.preferred_engine or "ollama"
+    else:
+        # Prefer Ollama for regular chat.
+        for candidate in (user.preferred_engine or "ollama", "ollama", "claude"):
+            try:
+                e = get_engine(candidate)
+                if e.is_available():
+                    engine_id = candidate
+                    break
+            except Exception:
+                continue
+        else:
+            engine_id = user.preferred_engine or "ollama"
+
     engine = get_engine(engine_id)
     if not engine.is_available():
         raise EngineUnavailable(
-            f"Engine '{engine_id}' is not available. "
-            "If it is a cloud engine, add its API key in Settings → API Keys. "
-            "If it is Ollama, start Ollama and install at least one chat model."
+            f"Motorn '{engine_id}' är inte tillgänglig. "
+            "Kontrollera API-nycklar i Inställningar → API-nycklar, "
+            "eller starta Ollama och installera en modell."
         )
     model = user.preferred_model or engine.default_model
     return engine_id, model

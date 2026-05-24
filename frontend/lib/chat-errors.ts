@@ -121,8 +121,9 @@ export function mapSpeechError(eventErrorCode: string): MappedError {
       };
     case "network":
       return {
-        kind: "offline",
-        message: "Speech recognition is offline. Check your connection.",
+        kind: "unknown",
+        message:
+          "Browser speech recognition is unavailable right now. Try Chrome or Edge, allow microphone access, and make sure the browser has internet access.",
       };
     default:
       return {

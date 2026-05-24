@@ -139,3 +139,26 @@ engines:
       - id: moonshot-v1-128k
         label: "Kimi v1 128k"
         good_for: "Mycket lång kontext. Bra för hela dokument och böcker."
+
+  gemini:
+    label: "Google Gemini"
+    provider: gemini
+    requires_key: true
+    api_key_env: GOOGLE_API_KEY
+    default_model: gemini-2.0-flash
+    privacy: cloud
+    description: "Googles senaste AI-modeller. Snabb, multimodal och kostnadseffektiv."
+    good_for: "Snabba svar, multimodalt innehåll, kod, sammanfattningar, lång kontext"
+    models:
+      - id: gemini-2.0-flash
+        label: "Gemini 2.0 Flash"
+        good_for: "Snabb och billig. Utmärkt för vardaglig chat och korta svar."
+      - id: gemini-2.5-pro
+        label: "Gemini 2.5 Pro"
+        good_for: "Flaggskepp. Stark på resonemang, kod och komplexa uppgifter."
+      - id: gemini-1.5-pro
+        label: "Gemini 1.5 Pro"
+        good_for: "Extremt långt kontextfönster (1M tokens). Bra för stora dokument."
+      - id: gemini-1.5-flash
+        label: "Gemini 1.5 Flash"
+        good_for: "Snabb och mångsidig. Bra balans pris/prestanda."

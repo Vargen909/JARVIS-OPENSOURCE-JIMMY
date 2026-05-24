@@ -7,11 +7,18 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from ..actions import (
+    ACTION_SYSTEM_ADDON,
+    ActionType,
+    classify_intent,
+    parse_action_from_reply,
+)
 from ..db import get_db
 from ..engines import ChatMessage, EngineError, EngineUnavailable, get_engine
 from ..models import Conversation, Message, User
 from ..safety import AgentGuard, AgentStopped
 from ..schemas import (
+    ActionOut,
     ChatRequest,
     ChatResponse,
     ConversationOut,
@@ -128,13 +135,25 @@ def chat(payload: ChatRequest, db: Session = Depends(get_db)):
         db.add(conv)
         db.flush()
 
+    # Classify intent for hybrid routing.
+    intent = classify_intent(payload.message)
+
+    # Child profiles never get action routing.
+    from ..models import UserRole
+    if user.role == UserRole.CHILD:
+        intent = "chat"
+
     try:
-        engine_id, model = select_engine(user, payload.engine)
+        engine_id, model = select_engine(user, payload.engine, intent=intent)
     except EngineUnavailable as e:
         raise HTTPException(503, str(e))
 
     engine = get_engine(engine_id)
     sys_prompt = build_system_prompt(user, db, engine_id=engine_id, model=model)
+
+    # Append action instructions for action-intent requests.
+    if intent == "action":
+        sys_prompt = sys_prompt + "\n\n" + ACTION_SYSTEM_ADDON
 
     history: List[ChatMessage] = history_for(conv) if not conv.confidential else []
     history.append(ChatMessage(role="user", content=payload.message))
@@ -188,9 +207,19 @@ def chat(payload: ChatRequest, db: Session = Depends(get_db)):
         else None
     )
 
+    # Extract and strip action block from reply.
+    clean_reply, action = parse_action_from_reply(reply_text)
+    action_out = ActionOut(
+        type=action.type,
+        params=action.params,
+        confirm=action.confirm,
+        label=action.label,
+    )
+    actions_list = [action_out] if action.type != "none" else []
+
     if not conv.confidential:
         add_message(conv, "user", payload.message)
-        reply_msg = add_message(conv, "assistant", reply_text, engine=engine_id, model=model)
+        reply_msg = add_message(conv, "assistant", clean_reply, engine=engine_id, model=model)
         if not user.onboarded:
             user.onboarded = True
         db.commit()
@@ -201,6 +230,7 @@ def chat(payload: ChatRequest, db: Session = Depends(get_db)):
             engine_used=engine_id,
             model_used=model,
             safety=safety_payload,
+            actions=actions_list,
         )
 
     db.commit()
@@ -210,7 +240,7 @@ def chat(payload: ChatRequest, db: Session = Depends(get_db)):
         reply=MessageOut(
             id=0,
             role="assistant",
-            content=reply_text,
+            content=clean_reply,
             engine=engine_id,
             model=model,
             created_at=datetime.utcnow(),
@@ -218,6 +248,7 @@ def chat(payload: ChatRequest, db: Session = Depends(get_db)):
         engine_used=engine_id,
         model_used=model,
         safety=safety_payload,
+        actions=actions_list,
     )
 
 

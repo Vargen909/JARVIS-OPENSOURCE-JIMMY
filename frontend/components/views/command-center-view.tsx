@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useJarvis } from "@/components/providers";
 import { api } from "@/lib/api";
+import { mapChatError } from "@/lib/chat-errors";
 import { useLayout } from "@/lib/use-layout-store";
 import { OperatingModesRail } from "./dashboard/operating-modes-rail";
 import { DashboardCenter } from "./dashboard/dashboard-center";
@@ -64,7 +65,7 @@ export function CommandCenterView({
       }
       setTimeout(() => setStatusMessage(undefined), 2000);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
+      setError(mapChatError(e).message);
       setStatusMessage(undefined);
     } finally {
       setPending(false);

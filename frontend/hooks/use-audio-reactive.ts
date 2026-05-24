@@ -23,7 +23,7 @@ interface AudioRefs {
   source: MediaStreamAudioSourceNode | null;
   analyser: AnalyserNode | null;
   raf: number | null;
-  buffer: Uint8Array | null;
+  buffer: Uint8Array<ArrayBuffer> | null;
 }
 
 /**
@@ -118,7 +118,9 @@ export function useAudioReactive(): AudioReactive {
     analyser.smoothingTimeConstant = 0.85;
     source.connect(analyser);
 
-    const buffer = new Uint8Array(analyser.fftSize);
+    const buffer: Uint8Array<ArrayBuffer> = new Uint8Array(
+      new ArrayBuffer(analyser.fftSize)
+    );
     refs.current = {
       ctx,
       stream,

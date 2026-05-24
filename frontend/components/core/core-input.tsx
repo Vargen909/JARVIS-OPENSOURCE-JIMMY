@@ -11,6 +11,9 @@ export interface CoreInputProps {
   pending: boolean;
   listening: boolean;
   error: string | null;
+  confirmPrompt?: string | null;
+  onConfirm?: () => void;
+  onCancel?: () => void;
   onSend: () => void;
   onToggleVoice: () => void;
   /** Idle (4s of inactivity) — fade out when no text. */
@@ -32,6 +35,9 @@ export const CoreInput = forwardRef<HTMLTextAreaElement, CoreInputProps>(
       pending,
       listening,
       error,
+      confirmPrompt = null,
+      onConfirm,
+      onCancel,
       onSend,
       onToggleVoice,
       idle,
@@ -62,6 +68,27 @@ export const CoreInput = forwardRef<HTMLTextAreaElement, CoreInputProps>(
             {error && (
               <div className="mb-3 text-center text-sm text-rose-400">
                 {error}
+              </div>
+            )}
+            {confirmPrompt && (
+              <div className="mb-3 rounded-2xl border border-white/[0.08] bg-bg-card/60 px-4 py-3 backdrop-blur">
+                <p className="text-center text-sm text-ink">{confirmPrompt}</p>
+                <div className="mt-3 flex items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={onConfirm}
+                    className="rounded-xl bg-accent px-3 py-1.5 text-xs font-medium text-white transition hover:bg-accent-soft"
+                  >
+                    Ja
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onCancel}
+                    className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-ink-mute transition hover:text-ink"
+                  >
+                    Avbryt
+                  </button>
+                </div>
               </div>
             )}
             <div className="flex items-end gap-3">
@@ -97,7 +124,7 @@ export const CoreInput = forwardRef<HTMLTextAreaElement, CoreInputProps>(
                         onSend();
                       }
                     }}
-                    placeholder="Ask B.O.B anything…"
+                    placeholder="Skriv ett kommando…"
                     disabled={pending}
                     className="flex-1 resize-none bg-transparent outline-none px-2 py-2 text-[15px] text-ink placeholder:text-ink-mute"
                     style={{ minHeight: 40, maxHeight: 150 }}
@@ -121,7 +148,7 @@ export const CoreInput = forwardRef<HTMLTextAreaElement, CoreInputProps>(
               </div>
             </div>
             <p className="text-[11px] text-ink-mute text-center mt-2">
-              Enter to send · Shift+Enter for new line · F1 commands · F5 focus
+              Enter för att skicka · Shift+Enter ny rad · F1 kommandon · F5 fokus
             </p>
           </motion.div>
         )}

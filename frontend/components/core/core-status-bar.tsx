@@ -9,6 +9,9 @@ export interface CoreStatusBarProps {
   modelLabel: string;
   pending: boolean;
   listening: boolean;
+  backendOnline?: boolean;
+  ready?: boolean;
+  activeEngineAvailable?: boolean;
   /** When true, fade out (idle) but keep DOM. */
   idle: boolean;
   /** When true, completely remove (focus mode). */
@@ -25,6 +28,9 @@ export function CoreStatusBar({
   modelLabel,
   pending,
   listening,
+  backendOnline = true,
+  ready = true,
+  activeEngineAvailable = true,
   idle,
   hidden = false,
 }: CoreStatusBarProps) {
@@ -37,6 +43,21 @@ export function CoreStatusBar({
     month: "short",
     day: "numeric",
   });
+
+  const healthLabel = !backendOnline
+    ? "Offline"
+    : !activeEngineAvailable
+      ? "Motor ej tillgänglig"
+      : ready
+        ? "Redo"
+        : "Startar";
+  const healthClass = !backendOnline
+    ? "bg-rose-400"
+    : !activeEngineAvailable
+      ? "bg-amber-400"
+      : pending
+        ? "bg-amber-400 animate-pulse"
+        : "bg-emerald-400";
 
   return (
     <AnimatePresence>
@@ -72,24 +93,20 @@ export function CoreStatusBar({
           >
             <Sparkles className="h-4 w-4 text-accent" />
             <span className="text-sm font-medium">{modelLabel}</span>
-            <div
-              className={cn(
-                "w-2 h-2 rounded-full",
-                pending ? "bg-amber-400 animate-pulse" : "bg-emerald-400"
-              )}
-            />
+            <div className={cn("w-2 h-2 rounded-full", healthClass)} />
+            <span className="text-[11px] text-ink-mute font-mono">{healthLabel}</span>
           </motion.div>
 
           <div className="hidden md:flex items-center gap-2 text-ink-dim">
             {listening ? (
               <>
                 <Mic className="h-4 w-4 text-accent" />
-                <span className="text-sm text-accent">Listening</span>
+                <span className="text-sm text-accent">Lyssnar</span>
               </>
             ) : (
               <>
                 <Activity className="h-4 w-4" />
-                <span className="text-sm">System Active</span>
+                <span className="text-sm">Systemet aktivt</span>
               </>
             )}
           </div>

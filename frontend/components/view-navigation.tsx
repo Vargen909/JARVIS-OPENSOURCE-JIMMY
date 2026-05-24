@@ -1,11 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Atom, LayoutDashboard, MessageSquare, Code, Brain, Settings, Palette } from "lucide-react";
+import { Atom, LayoutDashboard, LayoutGrid, MessageSquare, Code, Brain, Settings, Palette } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type ViewType =
   | "core"
+  | "launcher"
   | "command-center"
   | "chat"
   | "developer"
@@ -21,6 +22,7 @@ interface ViewNavigationProps {
 
 const VIEWS: { id: ViewType; label: string; icon: typeof Atom }[] = [
   { id: "core", label: "Core", icon: Atom },
+  { id: "launcher", label: "Workspace", icon: LayoutGrid },
   { id: "command-center", label: "Command", icon: LayoutDashboard },
   { id: "chat", label: "Chat", icon: MessageSquare },
   { id: "developer", label: "Developer", icon: Code },
@@ -34,6 +36,7 @@ const VIEWS: { id: ViewType; label: string; icon: typeof Atom }[] = [
  * used by keyboard shortcuts to cycle through with F2.
  */
 export const VIEW_CYCLE_ORDER: ViewType[] = [
+  "launcher",
   "core",
   "command-center",
   "chat",
@@ -48,7 +51,7 @@ export function nextViewInCycle(current: ViewType): ViewType {
 }
 
 export function ViewNavigation({ activeView, onViewChange, compact }: ViewNavigationProps) {
-  const items = compact ? VIEWS.slice(0, 5) : VIEWS;
+  const items = compact ? VIEWS.slice(0, 6) : VIEWS;
   return (
     <motion.nav
       initial={{ opacity: 0, y: -8 }}

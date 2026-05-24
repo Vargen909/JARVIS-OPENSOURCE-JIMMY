@@ -8,6 +8,7 @@ from typing import Dict, List
 from ..config import engines_config
 from .anthropic import AnthropicEngine
 from .base import ChatEngine, EngineUnavailable
+from .gemini import GeminiEngine
 from .ollama import OllamaEngine
 from .openai_compat import OpenAICompatibleEngine
 
@@ -33,6 +34,10 @@ def _build() -> Dict[str, ChatEngine]:
                 default_model=default_model or "gpt-4o-mini",
                 base_url=spec.get("base_url"),
                 base_url_env=spec.get("base_url_env"),
+            )
+        elif provider == "gemini":
+            engines[engine_id] = GeminiEngine(
+                default_model=default_model or "gemini-2.0-flash"
             )
     return engines
 

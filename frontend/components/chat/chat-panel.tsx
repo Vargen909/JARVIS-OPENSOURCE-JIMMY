@@ -44,7 +44,7 @@ export function ChatPanel({
       .then((c) => {
         if (alive) setMessages(c.messages);
       })
-      .catch((e) => alive && setError(String(e)));
+      .catch((e) => alive && setError(mapChatError(e).message));
     return () => {
       alive = false;
     };

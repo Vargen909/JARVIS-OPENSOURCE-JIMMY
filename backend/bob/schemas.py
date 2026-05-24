@@ -113,12 +113,26 @@ class SafetyConfigOut(BaseModel):
     max_identical_plans: int
 
 
+class ActionOut(BaseModel):
+    type: str = "none"
+    params: dict = {}
+    confirm: bool = False
+    label: str = ""
+
+
 class ChatResponse(BaseModel):
     conversation_id: int
     reply: MessageOut
     engine_used: str
     model_used: str
     safety: Optional[SafetyStop] = None
+    actions: List[ActionOut] = []
+
+
+class SpeechTranscriptionOut(BaseModel):
+    text: str
+    provider: str = "local-whisper"
+    model: str = "tiny"
 
 
 class ConversationOut(BaseModel):

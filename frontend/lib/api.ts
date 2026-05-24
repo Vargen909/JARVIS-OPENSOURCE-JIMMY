@@ -5,6 +5,7 @@ import type {
   EngineInfo,
   MemoryOut,
   ProfileData,
+  SpeechTranscription,
   UserOut,
 } from "./types";
 
@@ -56,6 +57,34 @@ async function request<T>(
   const data = (await res.json()) as T;
   dlog("ok", method, url);
   return data;
+}
+
+async function uploadForm<T>(path: string, form: FormData): Promise<T> {
+  const url = `${BASE}${path}`;
+  dlog("POST", url, "[form-data]");
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      body: form,
+      cache: "no-store",
+    });
+  } catch (e) {
+    dlog("network failure", "POST", url, e);
+    throw new Error(
+      `Cannot reach B.O.B backend at ${BASE}. Start it with: .\\scripts\\start-backend.ps1`
+    );
+  }
+  if (!res.ok) {
+    let detail = res.statusText;
+    try {
+      const data = await res.json();
+      detail = data.detail || detail;
+    } catch {}
+    dlog("error response", res.status, detail);
+    throw new Error(`${res.status}: ${detail}`);
+  }
+  return (await res.json()) as T;
 }
 
 export const api = {
@@ -149,6 +178,13 @@ export const api = {
     confidential?: boolean;
     operating_mode?: string;
   }) => request<ChatResponse>("/chat", { method: "POST", json: payload }),
+
+  transcribeAudio: (blob: Blob, filename = "speech.webm", language = "sv") => {
+    const form = new FormData();
+    form.append("file", blob, filename);
+    form.append("language", language);
+    return uploadForm<SpeechTranscription>("/speech/transcribe", form);
+  },
 
   listMemory: (userId: number) =>
     request<MemoryOut[]>(`/users/${userId}/memory`),

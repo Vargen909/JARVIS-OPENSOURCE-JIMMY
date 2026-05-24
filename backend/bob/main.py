@@ -19,6 +19,7 @@ from .routes.memory import router as memory_router
 from .routes.plugins import router as plugins_router
 from .routes.safety import router as safety_router
 from .routes.settings import router as settings_router
+from .routes.speech import router as speech_router
 from .routes.users import router as users_router
 from .schemas import AppInfo
 from fastapi import Depends
@@ -60,6 +61,7 @@ def create_app() -> FastAPI:
     app.include_router(api_keys_router)
     app.include_router(safety_router)
     app.include_router(settings_router)
+    app.include_router(speech_router)
     return app
 
 

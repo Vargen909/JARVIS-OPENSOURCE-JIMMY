@@ -16,6 +16,10 @@ interface BobCtx {
   users: UserOut[];
   engines: EngineInfo[];
   activeUser: UserOut | null;
+  activeEngine: EngineInfo | null;
+  backendOnline: boolean;
+  activeEngineAvailable: boolean;
+  ready: boolean;
   setActiveUserId: (id: number | null) => void;
   refresh: () => Promise<void>;
   loading: boolean;
@@ -82,6 +86,8 @@ export function BobProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (err) {
       console.error("refresh failed", err);
+      setInfo(null);
+      setEngines([]);
     } finally {
       setLoading(false);
     }
@@ -96,9 +102,31 @@ export function BobProvider({ children }: { children: React.ReactNode }) {
     [users, activeUserId]
   );
 
+  const activeEngine = useMemo(
+    () =>
+      activeUser ? engines.find((e) => e.id === activeUser.preferred_engine) ?? null : null,
+    [engines, activeUser]
+  );
+
+  const backendOnline = !!info;
+  const activeEngineAvailable = !!activeEngine?.available;
+  const ready = backendOnline && !!activeUser && activeEngineAvailable;
+
   return (
     <Ctx.Provider
-      value={{ info, users, engines, activeUser, setActiveUserId, refresh, loading }}
+      value={{
+        info,
+        users,
+        engines,
+        activeUser,
+        activeEngine,
+        backendOnline,
+        activeEngineAvailable,
+        ready,
+        setActiveUserId,
+        refresh,
+        loading,
+      }}
     >
       {children}
     </Ctx.Provider>

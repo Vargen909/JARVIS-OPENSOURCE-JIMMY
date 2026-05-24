@@ -90,11 +90,36 @@ export interface ConversationOut {
   messages: MessageOut[];
 }
 
+export type ActionType =
+  | "switch_view"
+  | "open_settings"
+  | "open_memory"
+  | "toggle_focus_mode"
+  | "create_note"
+  | "search_web"
+  | "open_url"
+  | "new_chat"
+  | "none";
+
+export interface Action {
+  type: ActionType;
+  params: Record<string, unknown>;
+  confirm: boolean;
+  label: string;
+}
+
 export interface ChatResponse {
   conversation_id: number;
   reply: MessageOut;
   engine_used: string;
   model_used: string;
+  actions: Action[];
+}
+
+export interface SpeechTranscription {
+  text: string;
+  provider: string;
+  model: string;
 }
 
 export interface MemoryOut {

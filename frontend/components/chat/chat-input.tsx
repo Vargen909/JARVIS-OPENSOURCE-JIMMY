@@ -13,11 +13,25 @@ export function ChatInput({
 }) {
   const [text, setText] = useState("");
   const ref = useRef<HTMLTextAreaElement>(null);
+  const textRef = useRef("");
+
+  textRef.current = text;
 
   const speech = useSpeechInput({
-    onFinalTranscript: (t) => {
+    onFinalTranscript: async (t) => {
       if (!t) return;
-      setText((cur) => (cur ? cur + " " + t : t));
+      const draft = textRef.current.trim();
+      // If the user already has a draft, append the transcript so nothing
+      // gets lost. Otherwise send immediately through the same pipeline as
+      // typed text.
+      if (draft || disabled) {
+        setText((cur) => (cur ? cur + " " + t : t));
+        return;
+      }
+      const ok = await onSend(t);
+      if (!ok) {
+        setText((cur) => (cur ? cur + " " + t : t));
+      }
     },
   });
 

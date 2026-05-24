@@ -17,6 +17,7 @@ python -m pip install --upgrade pip | Out-Null
 pip install -q -r backend/requirements.txt
 
 $env:PYTHONPATH = "$root\backend"
+$backendPort = if ($env:BOB_PORT) { [int]$env:BOB_PORT } elseif ($env:JARVIS_PORT) { [int]$env:JARVIS_PORT } else { 8765 }
 
 if ($Detached) {
     $log = Join-Path $root "bob.log"
@@ -29,7 +30,7 @@ if ($Detached) {
         -RedirectStandardError "$log.err" `
         -WindowStyle Hidden
     Start-Sleep -Seconds 3
-    Write-Host "Backend running at http://127.0.0.1:8765"
+    Write-Host "Backend running at http://127.0.0.1:$backendPort"
 } else {
     python -m bob.main
 }

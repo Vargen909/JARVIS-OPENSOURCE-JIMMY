@@ -8,6 +8,7 @@ import {
   Code,
   EyeOff,
   LayoutDashboard,
+  LayoutGrid,
   Lock,
   MessageSquare,
   Palette,
@@ -96,6 +97,17 @@ export function CommandOverlay({
 
   const items = useMemo<CommandItem[]>(() => {
     const viewItems: CommandItem[] = [
+      {
+        id: "view:launcher",
+        label: "Workspace",
+        hint: "OS launcher grid",
+        icon: LayoutGrid,
+        group: "Views",
+        run: () => {
+          onSelectView("launcher");
+          onClose();
+        },
+      },
       {
         id: "view:core",
         label: "Core",
