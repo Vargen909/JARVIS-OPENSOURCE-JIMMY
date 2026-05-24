@@ -12,6 +12,12 @@ const BASE =
   process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ||
   "http://127.0.0.1:8765";
 
+const isDev = process.env.NODE_ENV !== "production";
+
+function dlog(...args: unknown[]) {
+  if (isDev && typeof console !== "undefined") console.debug("[bob:api]", ...args);
+}
+
 async function request<T>(
   path: string,
   init?: RequestInit & { json?: unknown }
@@ -20,15 +26,19 @@ async function request<T>(
     "Content-Type": "application/json",
     ...(init?.headers as Record<string, string> | undefined),
   };
+  const url = `${BASE}${path}`;
+  const method = (init?.method as string | undefined) ?? "GET";
+  dlog(method, url);
   let res: Response;
   try {
-    res = await fetch(`${BASE}${path}`, {
+    res = await fetch(url, {
       ...init,
       headers,
       body: init?.json !== undefined ? JSON.stringify(init.json) : init?.body,
       cache: "no-store",
     });
-  } catch {
+  } catch (e) {
+    dlog("network failure", method, url, e);
     throw new Error(
       `Cannot reach B.O.B backend at ${BASE}. Start it with: .\\scripts\\start-backend.ps1`
     );
@@ -39,10 +49,13 @@ async function request<T>(
       const data = await res.json();
       detail = data.detail || detail;
     } catch {}
+    dlog("error response", res.status, detail);
     throw new Error(`${res.status}: ${detail}`);
   }
   if (res.status === 204) return undefined as T;
-  return (await res.json()) as T;
+  const data = (await res.json()) as T;
+  dlog("ok", method, url);
+  return data;
 }
 
 export const api = {

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useJarvis } from "../providers";
 import { api } from "@/lib/api";
+import { mapChatError } from "@/lib/chat-errors";
 import type { MessageOut } from "@/lib/types";
 import { ChatHeader } from "./chat-header";
 import { ChatMessages } from "./chat-messages";
@@ -104,7 +105,7 @@ export function ChatPanel({
       }
       return true;
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Failed");
+      setError(mapChatError(e).message);
       setMessages((m) => m.filter((x) => x.id !== optimistic.id));
       return false;
     } finally {

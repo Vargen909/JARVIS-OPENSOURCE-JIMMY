@@ -7,6 +7,8 @@ import { useJarvis } from "@/components/providers";
 import { Onboarding } from "@/components/onboarding";
 import { AppShell } from "@/components/app-shell";
 import { BobCore } from "@/components/bob/bob-core";
+import { API_BASE } from "@/lib/api";
+import { backendPort } from "@/lib/chat-errors";
 
 export default function Home() {
   const { loading, info, users, refresh } = useJarvis();
@@ -59,12 +61,18 @@ export default function Home() {
             <AlertTriangle className="w-6 h-6 text-amber-400" />
           </div>
           <div>
-            <h1 className="t-h2">Can&apos;t reach B.O.B</h1>
+            <h1 className="t-h2">B.O.B backend is offline</h1>
             <p className="text-ink-dim text-sm mt-2 leading-relaxed">
-              Make sure the backend is running at{" "}
+              Start backend on port{" "}
               <code className="text-accent font-mono text-xs">
-                {process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8765"}
+                {backendPort()}
               </code>
+              .
+              <br />
+              <span className="text-ink-mute text-xs">
+                Configured URL:{" "}
+                <code className="font-mono">{API_BASE}</code>
+              </span>
             </p>
           </div>
           <div className="space-y-2">

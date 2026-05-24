@@ -40,6 +40,9 @@ export const CoreInput = forwardRef<HTMLTextAreaElement, CoreInputProps>(
     ref
   ) {
     const hasText = text.trim().length > 0;
+    // Idle = visually faded only. Pointer events stay live so the user
+    // can always click the send/mic button — fade is purely cosmetic.
+    const fade = idle && !hasText && !listening && !pending;
     return (
       <AnimatePresence>
         {!hidden && (
@@ -47,16 +50,14 @@ export const CoreInput = forwardRef<HTMLTextAreaElement, CoreInputProps>(
             key="core-input"
             initial={{ opacity: 0, y: 24 }}
             animate={{
-              opacity: idle && !hasText && !listening ? 0 : 1,
-              y: idle && !hasText && !listening ? 12 : 0,
+              opacity: fade ? 0.35 : 1,
+              y: fade ? 6 : 0,
               scale: hasText ? 1.015 : 1,
             }}
+            whileHover={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 24 }}
             transition={{ duration: 0.4, ease: "easeOut" }}
-            className={cn(
-              "relative z-10 w-full max-w-3xl px-6 pb-8 shrink-0 mx-auto",
-              idle && !hasText && !listening && "pointer-events-none"
-            )}
+            className="relative z-10 w-full max-w-3xl px-6 pb-8 shrink-0 mx-auto"
           >
             {error && (
               <div className="mb-3 text-center text-sm text-rose-400">

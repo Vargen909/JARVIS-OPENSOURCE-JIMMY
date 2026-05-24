@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useJarvis } from "@/components/providers";
 import { api } from "@/lib/api";
+import { mapChatError } from "@/lib/chat-errors";
 import type { MessageOut } from "@/lib/types";
 import { useIdle } from "@/hooks/use-idle";
-import { useAudioReactive } from "@/hooks/use-audio-reactive";
+import { useSpeechInput } from "@/hooks/use-speech-input";
 import { CoreCanvas } from "./core-canvas";
 import { CoreInput } from "./core-input";
 import { CoreStatusBar } from "./core-status-bar";
@@ -19,6 +20,10 @@ interface CoreViewProps {
   focusMode?: boolean;
 }
 
+const isDev = process.env.NODE_ENV !== "production";
+const dlog = (...a: unknown[]) =>
+  isDev && typeof console !== "undefined" && console.debug("[bob:core]", ...a);
+
 /**
  * Cinematic full-screen Core view (orchestrator).
  *
@@ -28,7 +33,8 @@ interface CoreViewProps {
  *   - CoreInput      → bottom command bar, auto-hides on idle
  *
  * Backend behavior is unchanged: api.chat() with a thinking → speaking
- * → idle state arc, persisted via the active conversation.
+ * → idle state arc, persisted via the active conversation. Voice input
+ * uses the shared useSpeechInput hook and auto-sends on final transcript.
  */
 export function CoreView({
   conversationId,
@@ -41,37 +47,38 @@ export function CoreView({
   const [text, setText] = useState("");
   const [pending, setPending] = useState(false);
   const [speaking, setSpeaking] = useState(false);
-  const [listening, setListening] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastUserMessage, setLastUserMessage] = useState<string | null>(null);
   const [lastReply, setLastReply] = useState<MessageOut | null>(null);
   const [now, setNow] = useState(new Date());
   const [vw, setVw] = useState(0);
   const [vh, setVh] = useState(0);
-
-  const recRef = useRef<unknown>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
-  const toggleVoiceRef = useRef<() => void>(() => {});
-  const [focusReveal, setFocusReveal] = useState(false);
-  const focusRevealTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [simAmp, setSimAmp] = useState(0);
 
-  const audio = useAudioReactive();
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const speakingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sendRef = useRef<(t?: string) => Promise<void>>(async () => {});
+
+  const [focusReveal, setFocusReveal] = useState(false);
+  const focusRevealTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Idle fade: panels disappear after 4s without input. Override whenever
   // the user is actively engaged with the system.
-  const isActive =
-    text.trim().length > 0 || pending || listening || speaking;
+  const isActive = text.trim().length > 0 || pending || speaking;
   const isIdle = useIdle({ timeoutMs: 4000, forceActive: isActive });
 
+  // Tick the wall clock once a second.
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
 
+  // Focus the textarea on mount so the user can start typing immediately.
   useEffect(() => {
     inputRef.current?.focus();
   }, []);
 
+  // Track viewport so the orb scales by both width and height.
   useEffect(() => {
     const update = () => {
       setVw(window.innerWidth);
@@ -82,18 +89,102 @@ export function CoreView({
     return () => window.removeEventListener("resize", update);
   }, []);
 
+  // Send chat — accepts an explicit override (used by voice) so we don't
+  // rely on async state propagation between speech recognition and React.
+  const doSend = useCallback(
+    async (override?: string) => {
+      if (!activeUser) return;
+      const message = (override ?? text).trim();
+      if (!message || pending) return;
+
+      dlog("submit", { len: message.length, override: override !== undefined });
+      setError(null);
+      setLastUserMessage(message);
+      setPending(true);
+      setSpeaking(false);
+
+      // Clear any prior speaking timer so quick replies don't end early.
+      if (speakingTimerRef.current) {
+        clearTimeout(speakingTimerRef.current);
+        speakingTimerRef.current = null;
+      }
+
+      try {
+        const res = await api.chat({
+          user_id: activeUser.id,
+          conversation_id: conversationId ?? undefined,
+          message,
+          confidential,
+        });
+        dlog("reply", { conversation_id: res.conversation_id });
+        setText("");
+        setLastReply(res.reply);
+        setSpeaking(true);
+        if (!conversationId) {
+          onConversationCreated(res.conversation_id);
+          refresh();
+        }
+        speakingTimerRef.current = setTimeout(() => {
+          setSpeaking(false);
+          speakingTimerRef.current = null;
+        }, 2500);
+      } catch (e) {
+        const mapped = mapChatError(e);
+        dlog("send failed", mapped);
+        setError(mapped.message);
+      } finally {
+        setPending(false);
+      }
+    },
+    [activeUser, text, pending, conversationId, confidential, onConversationCreated, refresh]
+  );
+
+  // Keep the latest send fn in a ref so global event listeners and the
+  // speech hook always invoke the freshest closure.
+  sendRef.current = doSend;
+
+  // Cleanup speaking timer on unmount.
+  useEffect(() => {
+    return () => {
+      if (speakingTimerRef.current) clearTimeout(speakingTimerRef.current);
+    };
+  }, []);
+
+  // Voice input — shared hook. Final transcript triggers an auto-send so
+  // the user can talk to B.O.B and get a reply without pressing send.
+  const speech = useSpeechInput({
+    onFinalTranscript: (t) => {
+      if (!t) return;
+      setText("");
+      void sendRef.current(t);
+    },
+  });
+  const speechErrorMsg = speech.error?.message ?? null;
+  const listening = speech.listening;
+
+  // Surface speech errors in the same banner as chat errors.
+  useEffect(() => {
+    if (speechErrorMsg) setError(speechErrorMsg);
+  }, [speechErrorMsg]);
+
+  const toggleVoice = useCallback(() => {
+    if (!speech.supported) {
+      setError("Voice input is not supported in this browser.");
+      return;
+    }
+    speech.clearError();
+    speech.toggle();
+  }, [speech]);
+
   // Listen for global custom events from the shortcut layer.
   useEffect(() => {
     const onWake = () => {
-      // Briefly reveal the input and focus it (CTRL+SPACE).
       setFocusReveal(true);
       if (focusRevealTimer.current) clearTimeout(focusRevealTimer.current);
       focusRevealTimer.current = setTimeout(() => setFocusReveal(false), 6000);
       requestAnimationFrame(() => inputRef.current?.focus());
     };
-    const onVoice = () => {
-      toggleVoiceRef.current();
-    };
+    const onVoice = () => toggleVoice();
     window.addEventListener("bob:wake", onWake);
     window.addEventListener("bob:toggle-voice", onVoice);
     return () => {
@@ -101,10 +192,10 @@ export function CoreView({
       window.removeEventListener("bob:toggle-voice", onVoice);
       if (focusRevealTimer.current) clearTimeout(focusRevealTimer.current);
     };
-  }, []);
+  }, [toggleVoice]);
 
-  // While in Neural Focus Mode, any mousemove/keydown briefly reveals
-  // the input so the user can type without leaving focus mode.
+  // While in Neural Focus Mode, mousemove/keydown briefly reveals the
+  // input so the user can type without leaving focus mode.
   useEffect(() => {
     if (!focusMode) return;
     const reveal = () => {
@@ -120,21 +211,8 @@ export function CoreView({
     };
   }, [focusMode]);
 
-  // Audio-reactive listening: start the analyser when listening begins,
-  // stop when it ends. If the browser denies permission, we fall back to
-  // the simulated motion baked into BobCore's listening state — graceful.
-  useEffect(() => {
-    if (listening) {
-      void audio.start();
-    } else {
-      audio.stop();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [listening]);
-
-  // Simulated speaking amplitude. We don't have real TTS audio yet, so we
-  // animate a noise-summed waveform whose duration is proportional to the
-  // reply length. The orb feels like it's "speaking" in cadence.
+  // Simulated speaking amplitude — drives the orb intensity while
+  // assistant text is "speaking". No real TTS yet; this is purely visual.
   useEffect(() => {
     if (!speaking) {
       setSimAmp(0);
@@ -144,10 +222,8 @@ export function CoreView({
     let raf = 0;
     const tick = () => {
       const t = (performance.now() - start) / 1000;
-      // Two-frequency noise approximation, smoothed.
       const a = Math.sin(t * 6.1) * 0.35 + Math.sin(t * 2.3 + 1.4) * 0.25;
-      const env = Math.max(0, 0.6 + a);
-      setSimAmp(env);
+      setSimAmp(Math.max(0, 0.6 + a));
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -171,92 +247,15 @@ export function CoreView({
   const vertCap = vh > 0 ? Math.max(220, vh - reservedH) : 380;
   const orbSize = Math.min(480, horizCap, vertCap);
 
-  const send = async () => {
-    if (!text.trim() || pending || !activeUser) return;
-    setError(null);
-    setPending(true);
-    setSpeaking(false);
-    const sentText = text;
-    try {
-      const res = await api.chat({
-        user_id: activeUser.id,
-        conversation_id: conversationId ?? undefined,
-        message: sentText,
-        confidential,
-      });
-      setText("");
-      setLastReply(res.reply);
-      setSpeaking(true);
-      if (!conversationId) {
-        onConversationCreated(res.conversation_id);
-        refresh();
-      }
-      const t = setTimeout(() => setSpeaking(false), 2500);
-      return () => clearTimeout(t);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed");
-    } finally {
-      setPending(false);
-    }
-  };
-
-  const toggleVoice = () => {
-    interface SpeechRecognitionLike extends EventTarget {
-      lang: string;
-      interimResults: boolean;
-      continuous: boolean;
-      start: () => void;
-      stop: () => void;
-      onresult:
-        | ((e: { results: ArrayLike<{ 0: { transcript: string } }> }) => void)
-        | null;
-      onend: (() => void) | null;
-    }
-    const win = window as unknown as {
-      SpeechRecognition?: { new (): SpeechRecognitionLike };
-      webkitSpeechRecognition?: { new (): SpeechRecognitionLike };
-    };
-    const SR = win.SpeechRecognition || win.webkitSpeechRecognition;
-    if (!SR) {
-      alert("Voice input not supported in this browser.");
-      return;
-    }
-    if (listening && recRef.current) {
-      (recRef.current as SpeechRecognitionLike).stop();
-      return;
-    }
-    const r = new SR();
-    r.lang = navigator.language || "en-US";
-    r.interimResults = false;
-    r.continuous = false;
-    r.onresult = (e) => {
-      const t = Array.from(e.results)
-        .map((res) => res[0].transcript)
-        .join(" ");
-      setText((cur) => (cur ? cur + " " + t : t));
-    };
-    r.onend = () => setListening(false);
-    recRef.current = r;
-    r.start();
-    setListening(true);
-  };
-
-  // Keep latest toggleVoice in a ref so the global F3 listener uses fresh state.
-  toggleVoiceRef.current = toggleVoice;
-
   // In Neural Focus Mode, the orb dominates fully.
   // Status bar is always hidden; input only revealed on activity (focusReveal).
-  const inputHidden = focusMode && !focusReveal && !isActive;
+  const inputHidden = focusMode && !focusReveal && !isActive && !listening;
   const statusHidden = focusMode;
 
-  // Compose the orb's intensity multiplier from listening/speaking signals.
-  // Listening uses real microphone amplitude when permission is granted,
-  // otherwise it stays at 1 (simulated motion handled by BobCore itself).
-  // Speaking uses a simulated waveform amplitude.
-  let intensity = 1;
-  if (listening && audio.active) intensity = 1 + audio.level * 1.2;
-  else if (speaking) intensity = 1 + simAmp * 0.6;
-  if (focusMode) intensity *= 1.15;
+  // Speaking-only intensity (audio analyser detached from STT to avoid
+  // racing the SpeechRecognition mic permission).
+  const intensity =
+    (speaking ? 1 + simAmp * 0.6 : 1) * (focusMode ? 1.15 : 1);
 
   return (
     <div className="relative h-full w-full flex flex-col items-center min-h-0">
@@ -275,6 +274,7 @@ export function CoreView({
         pending={pending}
         speaking={speaking}
         listening={listening}
+        lastUserMessage={lastUserMessage}
         lastReplyContent={lastReply?.content}
         userName={activeUser.name}
         minimal={focusMode}
@@ -288,7 +288,7 @@ export function CoreView({
         pending={pending}
         listening={listening}
         error={error}
-        onSend={() => void send()}
+        onSend={() => void doSend()}
         onToggleVoice={toggleVoice}
         idle={isIdle}
         hidden={inputHidden}

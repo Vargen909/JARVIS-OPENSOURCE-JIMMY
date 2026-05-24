@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ArrowUp, Mic } from "lucide-react";
+import { useSpeechInput } from "@/hooks/use-speech-input";
 
 export function ChatInput({
   onSend,
@@ -12,8 +13,13 @@ export function ChatInput({
 }) {
   const [text, setText] = useState("");
   const ref = useRef<HTMLTextAreaElement>(null);
-  const [listening, setListening] = useState(false);
-  const recRef = useRef<unknown>(null);
+
+  const speech = useSpeechInput({
+    onFinalTranscript: (t) => {
+      if (!t) return;
+      setText((cur) => (cur ? cur + " " + t : t));
+    },
+  });
 
   useEffect(() => {
     if (ref.current) {
@@ -29,55 +35,37 @@ export function ChatInput({
     if (ok) setText("");
   };
 
-  const toggleVoice = () => {
-    interface SpeechRecognitionLike extends EventTarget {
-      lang: string;
-      interimResults: boolean;
-      continuous: boolean;
-      start: () => void;
-      stop: () => void;
-      onresult: ((e: { results: ArrayLike<{ 0: { transcript: string } }> }) => void) | null;
-      onend: (() => void) | null;
-    }
-    const win = window as unknown as {
-      SpeechRecognition?: { new (): SpeechRecognitionLike };
-      webkitSpeechRecognition?: { new (): SpeechRecognitionLike };
-    };
-    const SR = win.SpeechRecognition || win.webkitSpeechRecognition;
-    if (!SR) {
-      alert("Voice input not supported in this browser.");
-      return;
-    }
-    if (listening && recRef.current) {
-      (recRef.current as SpeechRecognitionLike).stop();
-      return;
-    }
-    const r = new SR();
-    r.lang = navigator.language || "en-US";
-    r.interimResults = false;
-    r.continuous = false;
-    r.onresult = (e) => {
-      const t = Array.from(e.results)
-        .map((res) => res[0].transcript)
-        .join(" ");
-      setText((cur) => (cur ? cur + " " + t : t));
-    };
-    r.onend = () => setListening(false);
-    recRef.current = r;
-    r.start();
-    setListening(true);
+  const handleVoice = () => {
+    if (!speech.supported) return;
+    speech.clearError();
+    speech.toggle();
   };
+
+  const voiceError = speech.error?.message;
+  const voiceUnsupported = !speech.supported;
 
   return (
     <div className="px-4 sm:px-6 pb-5 pt-2">
       <div className="mx-auto max-w-3xl">
+        {(voiceError || voiceUnsupported) && (
+          <div className="mb-2 text-center text-xs text-rose-400">
+            {voiceError ?? "Voice input is not supported in this browser."}
+          </div>
+        )}
         <div className="panel glow-input flex items-end gap-2 p-2 pr-2.5 transition-shadow duration-300">
           <button
-            onClick={toggleVoice}
+            onClick={handleVoice}
+            disabled={voiceUnsupported}
             className={`btn-ghost h-10 w-10 p-0 justify-center ${
-              listening ? "text-rose-400" : ""
+              speech.listening ? "text-rose-400" : ""
             }`}
-            title="Voice input"
+            title={
+              voiceUnsupported
+                ? "Voice input is not supported in this browser"
+                : speech.listening
+                  ? "Stop listening"
+                  : "Voice input"
+            }
           >
             <Mic className="w-4 h-4" />
           </button>

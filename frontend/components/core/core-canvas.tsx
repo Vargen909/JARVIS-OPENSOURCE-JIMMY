@@ -10,6 +10,8 @@ export interface CoreCanvasProps {
   listening: boolean;
   /** Reply text shown briefly under the orb while speaking. */
   lastReplyContent?: string;
+  /** The user's most recent message — echoed under the orb so the user can see what was sent. */
+  lastUserMessage?: string | null;
   /** Name shown in the idle greeting. */
   userName?: string;
   /** External audio-reactive multiplier (1 = baseline). */
@@ -30,12 +32,33 @@ export function CoreCanvas({
   speaking,
   listening,
   lastReplyContent,
+  lastUserMessage,
   userName,
   intensity = 1,
   minimal = false,
 }: CoreCanvasProps) {
+  const showUserEcho = !minimal && !!lastUserMessage && (pending || speaking);
+
   return (
     <div className="relative z-10 flex-1 min-h-0 flex flex-col items-center justify-center w-full px-6">
+      <AnimatePresence>
+        {showUserEcho && (
+          <motion.div
+            key="user-echo"
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.25 }}
+            className="mb-4 max-w-xl px-4 py-2 rounded-2xl bg-white/[0.04] border border-white/[0.06] text-center"
+          >
+            <p className="text-[11px] uppercase tracking-widest text-ink-mute mb-1">
+              You
+            </p>
+            <p className="text-sm text-ink line-clamp-2">{lastUserMessage}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <motion.div
         initial={{ opacity: 0, scale: 0.85 }}
         animate={{ opacity: 1, scale: 1 }}
