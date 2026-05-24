@@ -34,7 +34,7 @@ import {
   Terminal,
   Users,
 } from "lucide-react";
-import type { ViewType } from "@/components/view-navigation";
+import type { ViewType } from "@/components/shell/app-chrome";
 
 // ── Accent palette ──────────────────────────────────────────────────────────
 
@@ -99,8 +99,8 @@ export const LAUNCHER_ITEMS: LauncherItem[] = [
     description: "Command center",
     icon: LayoutDashboard,
     accent: "blue",
-    status: "available",
-    action: { kind: "view", view: "command-center" },
+    status: "soon",
+    action: { kind: "soon" },
   },
   {
     id: "memory",
@@ -108,8 +108,8 @@ export const LAUNCHER_ITEMS: LauncherItem[] = [
     description: "Persistent knowledge",
     icon: Brain,
     accent: "violet",
-    status: "available",
-    action: { kind: "view", view: "memory" },
+    status: "soon",
+    action: { kind: "soon" },
   },
   {
     id: "settings",
@@ -126,8 +126,8 @@ export const LAUNCHER_ITEMS: LauncherItem[] = [
     description: "Developer workspace",
     icon: Code,
     accent: "cyan",
-    status: "available",
-    action: { kind: "view", view: "developer" },
+    status: "soon",
+    action: { kind: "soon" },
   },
   {
     id: "terminal",
@@ -146,8 +146,8 @@ export const LAUNCHER_ITEMS: LauncherItem[] = [
     description: "Saved thoughts",
     icon: StickyNote,
     accent: "amber",
-    status: "available",
-    action: { kind: "view", view: "memory" },
+    status: "soon",
+    action: { kind: "soon" },
   },
   {
     id: "files",
@@ -240,8 +240,8 @@ export const LAUNCHER_ITEMS: LauncherItem[] = [
     description: "Models & plugins",
     icon: Code,
     accent: "sky",
-    status: "available",
-    action: { kind: "view", view: "developer" },
+    status: "soon",
+    action: { kind: "soon" },
   },
   {
     id: "debugger",
@@ -267,8 +267,8 @@ export const LAUNCHER_ITEMS: LauncherItem[] = [
     description: "Model management",
     icon: BrainCircuit,
     accent: "purple",
-    status: "available",
-    action: { kind: "view", view: "developer" },
+    status: "soon",
+    action: { kind: "soon" },
   },
   {
     id: "voice-console",

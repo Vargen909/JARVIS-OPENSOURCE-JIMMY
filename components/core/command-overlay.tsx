@@ -5,9 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Atom,
   Brain,
-  Code,
   EyeOff,
-  LayoutDashboard,
   LayoutGrid,
   Lock,
   MessageSquare,
@@ -22,7 +20,7 @@ import {
 import { useJarvis } from "@/components/providers";
 import { api } from "@/lib/api";
 import type { ConversationOut } from "@/lib/types";
-import type { ViewType } from "@/components/view-navigation";
+import type { ViewType } from "@/components/shell/app-chrome";
 import { cn } from "@/lib/utils";
 
 interface CommandOverlayProps {
@@ -53,10 +51,7 @@ interface CommandItem {
 
 /**
  * Cinematic command palette — F1 / TAB.
- *
- * Searchable list of views, recent conversations, and quick actions.
- * Keyboard nav: ↑ / ↓ / Enter / Escape. Hand-rolled (no cmdk dep) so
- * it stays consistent with the B.O.B aesthetic and weighs nothing extra.
+ * Simplified to only Core and Workspace views.
  */
 export function CommandOverlay({
   open,
@@ -81,7 +76,6 @@ export function CommandOverlay({
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Reset query and reload recent conversations on open.
   useEffect(() => {
     if (!open) return;
     setQuery("");
@@ -98,20 +92,9 @@ export function CommandOverlay({
   const items = useMemo<CommandItem[]>(() => {
     const viewItems: CommandItem[] = [
       {
-        id: "view:launcher",
-        label: "Workspace",
-        hint: "OS launcher grid",
-        icon: LayoutGrid,
-        group: "Views",
-        run: () => {
-          onSelectView("launcher");
-          onClose();
-        },
-      },
-      {
         id: "view:core",
         label: "Core",
-        hint: "Cinematic neural home",
+        hint: "Neural AI home",
         icon: Atom,
         group: "Views",
         run: () => {
@@ -120,46 +103,13 @@ export function CommandOverlay({
         },
       },
       {
-        id: "view:command-center",
-        label: "Command Center",
-        hint: "Operating dashboard",
-        icon: LayoutDashboard,
+        id: "view:launcher",
+        label: "Workspace",
+        hint: "Apps & modules",
+        icon: LayoutGrid,
         group: "Views",
         run: () => {
-          onSelectView("command-center");
-          onClose();
-        },
-      },
-      {
-        id: "view:chat",
-        label: "Chat",
-        hint: "Threaded conversation",
-        icon: MessageSquare,
-        group: "Views",
-        run: () => {
-          onSelectView("chat");
-          onClose();
-        },
-      },
-      {
-        id: "view:developer",
-        label: "Developer",
-        hint: "Models, plugins, telemetry",
-        icon: Code,
-        group: "Views",
-        run: () => {
-          onSelectView("developer");
-          onClose();
-        },
-      },
-      {
-        id: "view:memory",
-        label: "Memory",
-        hint: "Persistent knowledge",
-        icon: Brain,
-        group: "Views",
-        run: () => {
-          onSelectView("memory");
+          onSelectView("launcher");
           onClose();
         },
       },
@@ -172,7 +122,7 @@ export function CommandOverlay({
       icon: MessageSquare,
       group: "Recent",
       run: () => {
-        onSelectView("chat");
+        onSelectView("core");
         onClose();
       },
     }));
@@ -264,7 +214,6 @@ export function CommandOverlay({
     );
   }, [items, query]);
 
-  // Clamp cursor when filtered changes.
   useEffect(() => {
     if (cursor >= filtered.length) setCursor(0);
   }, [filtered.length, cursor]);
@@ -286,7 +235,6 @@ export function CommandOverlay({
     }
   };
 
-  // Group rendering ordering.
   const groups = useMemo(() => {
     const order: Array<CommandItem["group"]> = ["Views", "Recent", "Actions"];
     return order
@@ -297,14 +245,12 @@ export function CommandOverlay({
       .filter((g) => g.items.length > 0);
   }, [filtered]);
 
-  // Compute global cursor index per filtered item to highlight correctly.
   const cursorMap = useMemo(() => {
     const map = new Map<string, number>();
     filtered.forEach((i, idx) => map.set(i.id, idx));
     return map;
   }, [filtered]);
 
-  // Mark activeView in views group label
   const activeViewId = `view:${activeView}`;
 
   return (

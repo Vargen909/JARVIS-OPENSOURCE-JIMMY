@@ -7,12 +7,12 @@
  */
 
 import type { Action } from "./types";
-import type { ViewType } from "@/components/view-navigation";
-import { api } from "./api";
+import type { ViewType } from "@/components/shell/app-chrome";
 
 export interface ActionContext {
   setActiveView: (v: ViewType) => void;
   setSettingsOpen: (b: boolean) => void;
+  setMemoryDrawerOpen?: (b: boolean) => void;
   setFocusMode: (b: boolean) => void;
   openWebView: (url: string) => void;
   addMemory: (content: string) => Promise<void>;
@@ -25,10 +25,6 @@ const VIEW_MAP: Record<string, ViewType> = {
   core: "core",
   launcher: "launcher",
   workspace: "launcher",
-  chat: "chat",
-  memory: "memory",
-  developer: "developer",
-  "command-center": "command-center",
 };
 
 export async function dispatchAction(
@@ -45,7 +41,7 @@ export async function dispatchAction(
       ctx.setSettingsOpen(true);
       break;
     case "open_memory":
-      ctx.setActiveView("memory");
+      ctx.setMemoryDrawerOpen?.(true);
       break;
     case "toggle_focus_mode":
       ctx.setFocusMode(!ctx.currentFocusMode);

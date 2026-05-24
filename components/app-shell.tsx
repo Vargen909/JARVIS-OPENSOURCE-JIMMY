@@ -8,13 +8,8 @@ import { CustomizeLayout } from "./customize-layout";
 import { WebViewPanel } from "./WebViewPanel";
 import { CoreView } from "./core/core-view";
 import { CommandOverlay } from "./core/command-overlay";
-import { CommandCenterView } from "./views/command-center-view";
-import { ChatView } from "./views/chat-view";
-import { MemoryView } from "./views/memory-view";
-import { DeveloperView } from "./views/developer-view";
 import { LauncherView } from "./views/launcher-view";
-import { AppChrome } from "./shell/app-chrome";
-import { nextViewInCycle, type ViewType } from "./view-navigation";
+import { AppChrome, type ViewType } from "./shell/app-chrome";
 import { useWebView } from "@/hooks/useWebView";
 import { useIdle } from "@/hooks/use-idle";
 import { useLayout } from "@/lib/use-layout-store";
@@ -35,7 +30,7 @@ export function AppShell() {
   const [voiceMuted, setVoiceMuted] = useState(false);
   const [pendingVoiceToggle, setPendingVoiceToggle] = useState(0);
   const [pendingWake, setPendingWake] = useState(0);
-  /** Default: Workspace launcher — the premium OS landing screen */
+  /** Default: Workspace launcher */
   const [activeView, setActiveView] = useState<ViewType>("launcher");
 
   useEffect(() => {
@@ -50,14 +45,6 @@ export function AppShell() {
   const focusMode = layout.state.coreFocusMode && activeView === "core";
 
   const handleViewChange = useCallback((v: ViewType) => {
-    if (v === "settings") {
-      setSettingsOpen(true);
-      return;
-    }
-    if (v === "customize") {
-      setCustomizeOpen(true);
-      return;
-    }
     setActiveView(v);
   }, []);
 
@@ -65,6 +52,7 @@ export function AppShell() {
     () => ({
       setActiveView: handleViewChange,
       setSettingsOpen,
+      setMemoryDrawerOpen,
       setFocusMode: (b: boolean) =>
         layout.dispatch({ type: "SET_FOCUS_MODE", value: b }),
       openWebView: webView.openUrl,
@@ -78,8 +66,7 @@ export function AppShell() {
   );
 
   // When shortcuts request wake/voice from another view, wait until Core
-  // has actually mounted before dispatching the CustomEvent. This avoids
-  // losing the event during the view transition.
+  // has actually mounted before dispatching the CustomEvent.
   useEffect(() => {
     if (activeView !== "core") return;
     if (pendingVoiceToggle > 0) {
@@ -92,12 +79,11 @@ export function AppShell() {
     }
   }, [activeView, pendingVoiceToggle, pendingWake]);
 
-  // Immersive keyboard shortcuts — wired globally; some are routed through
-  // window CustomEvents so the active CoreView instance can react.
+  // Keyboard shortcuts
   useCoreShortcuts(
     {
       toggleCommandOverlay: () => setCommandOverlayOpen((o) => !o),
-      cycleView: () => setActiveView((v) => nextViewInCycle(v)),
+      cycleView: () => setActiveView((v) => (v === "core" ? "launcher" : "core")),
       toggleVoice: () => {
         if (activeView !== "core") {
           setPendingVoiceToggle((n) => n + 1);
@@ -121,7 +107,6 @@ export function AppShell() {
       },
       openCommandOverlay: () => setCommandOverlayOpen(true),
       escape: () => {
-        // Priority: command overlay → focus mode → drawers
         if (commandOverlayOpen) return setCommandOverlayOpen(false);
         if (focusMode)
           return layout.dispatch({ type: "SET_FOCUS_MODE", value: false });
@@ -151,7 +136,12 @@ export function AppShell() {
         open={commandOverlayOpen}
         onClose={() => setCommandOverlayOpen(false)}
         activeView={activeView}
-        onSelectView={handleViewChange}
+        onSelectView={(v) => {
+          setCommandOverlayOpen(false);
+          if (v === "core" || v === "launcher") {
+            handleViewChange(v);
+          }
+        }}
         onOpenSettings={() => {
           setCommandOverlayOpen(false);
           setSettingsOpen(true);
@@ -162,7 +152,7 @@ export function AppShell() {
         }}
         onOpenMemory={() => {
           setCommandOverlayOpen(false);
-          setActiveView("memory");
+          setMemoryDrawerOpen(true);
         }}
         onNewConversation={() => {
           setCommandOverlayOpen(false);
@@ -201,7 +191,6 @@ export function AppShell() {
         <AppChrome
           activeView={activeView}
           onViewChange={handleViewChange}
-          onOpenCustomize={() => setCustomizeOpen(true)}
           fullscreen
           navIdle={navIdle || focusMode}
           navHidden={focusMode}
@@ -231,13 +220,12 @@ export function AppShell() {
     );
   }
 
-  // ── All other views: chrome + routed content ─────────────────────────────
+  // ── Workspace View ─────────────────────────────────────────────────────────
   return (
     <>
       <AppChrome
         activeView={activeView}
         onViewChange={handleViewChange}
-        onOpenCustomize={() => setCustomizeOpen(true)}
       >
         <AnimatePresence mode="wait">
           <motion.div
@@ -248,41 +236,12 @@ export function AppShell() {
             transition={{ duration: 0.2 }}
             className="flex flex-1 min-h-0 w-full"
           >
-            {activeView === "command-center" && (
-              <CommandCenterView
-                conversationId={conversationId}
-                onConversationCreated={(id) => setConversationId(id)}
-                confidential={confidential}
-                onOpenSettings={() => setSettingsOpen(true)}
-                onOpenMemory={() => setActiveView("memory")}
-              />
-            )}
-
-            {activeView === "chat" && (
-              <ChatView
-                conversationId={conversationId}
-                onConversationCreated={(id) => setConversationId(id)}
-                onSelectConversation={setConversationId}
-                onNewChat={() => setConversationId(null)}
-                confidential={confidential}
-                onToggleConfidential={() => setConfidential((v) => !v)}
-                onOpenSettings={() => setSettingsOpen(true)}
-                onOpenMemory={() => setActiveView("memory")}
-                onOpenCustomize={() => setCustomizeOpen(true)}
-                onOpenWebView={webView.openUrl}
-              />
-            )}
-
-            {activeView === "launcher" && (
-              <LauncherView
-                onViewChange={handleViewChange}
-                onOpenSettings={() => setSettingsOpen(true)}
-                onOpenCustomize={() => setCustomizeOpen(true)}
-                onOpenWebView={webView.openUrl}
-              />
-            )}
-            {activeView === "memory" && <MemoryView />}
-            {activeView === "developer" && <DeveloperView />}
+            <LauncherView
+              onViewChange={handleViewChange}
+              onOpenSettings={() => setSettingsOpen(true)}
+              onOpenCustomize={() => setCustomizeOpen(true)}
+              onOpenWebView={webView.openUrl}
+            />
           </motion.div>
         </AnimatePresence>
       </AppChrome>

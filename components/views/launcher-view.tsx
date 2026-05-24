@@ -6,7 +6,7 @@ import { LAUNCHER_ITEMS, type LauncherAction } from "@/lib/launcher-items";
 import { LauncherCard } from "@/components/launcher/launcher-card";
 import { LauncherCoreCard } from "@/components/launcher/launcher-core-card";
 import { LauncherToast } from "@/components/launcher/launcher-toast";
-import type { ViewType } from "@/components/view-navigation";
+import type { ViewType } from "@/components/shell/app-chrome";
 
 interface LauncherViewProps {
   onViewChange: (v: ViewType) => void;
