@@ -219,8 +219,8 @@ body {
     @apply text-[9.5px] uppercase tracking-[0.14em] text-ink-mute font-semibold;
   }
 
-  .icon-badge    { @apply w-10 h-10 rounded-xl bg-accent/12 flex items-center justify-center shrink-0; }
-  .icon-badge-sm { @apply w-8  h-8  rounded-lg bg-accent/12 flex items-center justify-center shrink-0; }
+  .icon-badge    { @apply w-10 h-10 rounded-xl flex items-center justify-center shrink-0; background: rgb(var(--accent) / 0.12); }
+  .icon-badge-sm { @apply w-8  h-8  rounded-lg flex items-center justify-center shrink-0; background: rgb(var(--accent) / 0.12); }
 
   .glow-input:focus-within {
     box-shadow:
